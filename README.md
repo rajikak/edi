@@ -7,7 +7,7 @@ Convert an X12 document into Zig data structures.
 LIN*1*VP*1003200-01-R***CH*US~
 ```
 
-* Token
+Token Definition
 ```
 type - identifier, seperator
 value - value of the token (LIN, 1, VP)
