@@ -1,10 +1,10 @@
-const Type = enum {
-	error,
-	eof,
-	transaction_set,
+pub const ItemType = enum {
+    err,
+    eof,
+    transaction_set,
 };
 
-const Lexer = struct {
-	seg_term: char, // segment terminator
-	ele_delm: char, // element terminator
+pub const Lexer = struct {
+    seg_term: c_char, // segment terminator
+    ele_delm: c_char, // element terminator
 };
