@@ -32,5 +32,5 @@ test "lexer" {
         \\ SE*13*1234~
     ;
 
-    print("lexer string: {}", .{s});
+    print("lexer string: {s}", .{s});
 }

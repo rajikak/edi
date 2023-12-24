@@ -6,6 +6,13 @@ pub const Segment = struct {
 };
 
 pub const SegmentType = enum {
-    ST,
-    BHT,
+    ST, // Transaction Set Header
+    BHT, // Begining of Hierachical Transaction
+    HL, // Hierachical Level
+    TRN, // Trace
+    NM1, // Invidual or Organizational Name
+    REF, // Reference Information
+    N2, // Additional Name Information
+    N3, // Party Location
+
 };
