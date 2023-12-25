@@ -3,11 +3,11 @@ const testing = std.testing;
 
 const Segment = struct {
     val: SegmentType, // segment type
-    position: []u8, // position in the document
+    position: []const u8, // position in the document
     required: bool, // if this segment is required
-    description: []u8, // description of the segment
+    description: []const u8, // description of the segment
 
-    pub fn init(val: SegmentType, position: []u8, required: bool, description: []u8) Segment {
+    pub fn init(val: SegmentType, position: []const u8, required: bool, description: []const u8) Segment {
         return Segment{
             .val = val,
             .position = position,
@@ -39,4 +39,6 @@ pub const SegmentType = enum {
 test "segment" {
     const s = Segment.init(SegmentType.ST, "0100", true, "Transaction Set Header");
     try testing.expect(s.val == SegmentType.ST);
+    try testing.expect(std.mem.eql(u8, s.position, "0100") == true);
+    try testing.expect(s.required == true);
 }

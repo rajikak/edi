@@ -1,11 +1,14 @@
 const std = @import("std");
+const seg = @import("segment.zig");
+const SegmentType = seg.SegmentType;
+const Segment = seg.Segment;
+const testing = std.testing;
 
 pub const TransactionSet270 = struct {
-
     store: std.AutoArrayHashMap,
 
     pub fn init() TransactionSet270 {
-        return TransactionSet270 {
+        return TransactionSet270{
             .store = transaction_set270(),
         };
     }
@@ -28,4 +31,9 @@ fn transaction_set270() std.AutoArrayHashMap {
 
 test "ts-270" {
     const ts = TransactionSet270.init();
+
+    var value = ts.get(SegmentType.ST);
+    if (value) |v| {
+        try testing.expect(v.val == SegmentType.ST);
+    } else {}
 }
