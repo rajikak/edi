@@ -16,12 +16,11 @@ const Segment = struct {
         };
     }
 
-    pub fn print(self: Segment) []const u8 {
-        //std.debug.print("Segment: value={},", {.self.val});
-        //std.debug.print("position={}, ", {.self.position});
-        //std.debug.print("required={}, ", {.self.required});
-        //std.debug.print("description={}\n", {.self.description});
-        return self.val;
+    pub fn print(self: Segment) void {
+        std.debug.print("\nSegment: value={},", .{self.val});
+        std.debug.print("position={s}, ", .{self.position});
+        std.debug.print("required={}, ", .{self.required});
+        std.debug.print("description={s}\n", .{self.description});
     }
 };
 
@@ -41,4 +40,6 @@ test "segment" {
     try testing.expect(s.val == SegmentType.ST);
     try testing.expect(std.mem.eql(u8, s.position, "0100") == true);
     try testing.expect(s.required == true);
+
+    s.print();
 }
