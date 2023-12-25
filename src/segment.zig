@@ -25,31 +25,18 @@ const Segment = struct {
     }
 };
 
-const SegmentType = enum {
-    ST, // Transaction Set Header
-    BHT, // Begining of Hierachical Transaction
-    HL, // Hierachical Level
-    TRN, // Trace
-    NM1, // Invidual or Organizational Name
-    REF, // Reference Information
-    N2, // Additional Name Information
-    N3, // Party Location
+pub const SegmentType = enum {
+    ST,
+    BHT,
+    HL,
+    TRN,
+    NM1,
+    REF,
+    N2,
+    N3,
 };
 
-pub fn transaction_set() std.AutoArrayHashMap {
-    const ts = std.AutoArrayHashMap(SegmentType, Segment).init();
-
-    ts.put(SegmentType.ST, Segment.init(SegmentType.ST, "0100", true, "Transaction Set Header"));
-
-    return ts;
-}
-
 test "segment" {
-    const s = transaction_set();
-
-    const val = s.get(SegmentType.ST);
-    if (val) |v| {
-        v.print();
-    }
-    //try expect(s.)
+    const s = Segment.init(SegmentType.ST, "0100", true, "Transaction Set Header");
+    try testing.expect(s.val == SegmentType.ST);
 }

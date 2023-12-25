@@ -15,7 +15,7 @@ Generate an X12 document from Zig data strctures.
 
 ### API Examples 
 ```
-Document Zig API
+Document Zig library API
 ```
 
 
