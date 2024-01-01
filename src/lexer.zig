@@ -1,5 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
+const mem = std.mem;
 
 pub const ItemType = enum {
     err,
@@ -17,9 +18,11 @@ const Item = struct {
 
 const Lexer = struct {
     input: []const u8,
+    start: u8, // start position of the item
+    pos: u8, // current position of the input
 
     pub fn init(input: []const u8) Lexer {
-        return Lexer{ .input = input };
+        return Lexer{ .input = input, .start = 0, .pos = 0 };
     }
 
     pub fn print(self: Lexer) void {
@@ -28,14 +31,22 @@ const Lexer = struct {
 
     // return the next token
     pub fn next(self: Lexer) void {
-        std.debug.print("next: {s}\n", .{self.input});
+        var index: u8 = 0;
+        while (true) : (index += 1) {
+            if (index >= self.input.len) {
+                break;
+            }
+            if (self.input[index] == '*') {
+                std.debug.print("token: {s}\n", .{self.input[0..index]});
+            }
+        }
     }
 };
 
 test "str" {
     const s = "TST*123";
     const lexer = Lexer.init(s);
-    lexer.print();
+    lexer.next();
 }
 
 test "str2" {
@@ -55,6 +66,5 @@ test "str2" {
         \\ EQ*30~
         \\ SE*13*1234~
     ;
-    const lexer = Lexer.init(s);
-    lexer.next();
+    _ = Lexer.init(s);
 }
