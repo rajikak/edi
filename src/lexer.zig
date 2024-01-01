@@ -1,4 +1,5 @@
-const print = @import("std").debug.print;
+const std = @import("std");
+const testing = std.testing;
 
 pub const ItemType = enum {
     err,
@@ -14,7 +15,30 @@ const Item = struct {
     line: u8, // the line number at the start of this item.
 };
 
-test "lexer" {
+const Lexer = struct {
+    input: []const u8,
+
+    pub fn init(input: []const u8) Lexer {
+        return Lexer{ .input = input };
+    }
+
+    pub fn print(self: Lexer) void {
+        std.debug.print("EDI: {s}\n", .{self.input});
+    }
+
+    // return the next token
+    pub fn next(self: Lexer) void {
+        std.debug.print("next: {s}\n", .{self.input});
+    }
+};
+
+test "str" {
+    const s = "TST*123";
+    const lexer = Lexer.init(s);
+    lexer.print();
+}
+
+test "str2" {
     // a sample EDI
     const s =
         \\ ST*270*1234*005010X279A1~
@@ -31,6 +55,6 @@ test "lexer" {
         \\ EQ*30~
         \\ SE*13*1234~
     ;
-
-    print("lexer string: {s}", .{s});
+    const lexer = Lexer.init(s);
+    lexer.next();
 }
