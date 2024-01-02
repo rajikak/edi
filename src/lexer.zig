@@ -2,10 +2,15 @@ const std = @import("std");
 const testing = std.testing;
 const mem = std.mem;
 
+const eof: u8 = -1;
+const segment_sep: u8 = '~';
+const element_sep: u8 = '*';
+
 pub const ItemType = enum {
-    err,
+    err, // error occured; value is the text of error
     eof,
-    transaction_set,
+    identifier,
+    alpha,
 };
 
 // item represents a token of a text string returned from the scanner
@@ -14,30 +19,39 @@ const Item = struct {
     pos: u8, // the starting position, in bytes, of this item in the input string.
     val: []const u8, // the value of this item.
     line: u8, // the line number at the start of this item.
+
+    pub fn print(self: Item) void {
+        std.debug.print("item{type = {}, }}", .{self.typ});
+        std.debug.print("pos = {}, ", .{self.pos});
+        std.debug.print("val = {}, ", .{self.pos});
+        std.debug.print("line = {}\n", .{self.line});
+    }
 };
 
 const Lexer = struct {
     input: []const u8,
     start: u8, // start position of the item
     pos: u8, // current position of the input
+    at_eof: bool, // we have hit the end of input and returned eof
 
-    pub fn init(input: []const u8) Lexer {
-        return Lexer{ .input = input, .start = 0, .pos = 0 };
+    fn init(input: []const u8, start: u8, pos: u8, at_eof: bool) Lexer {
+        return Lexer{ .input = input, .start = start, .pos = pos, .at_eof = at_eof };
     }
 
-    pub fn print(self: Lexer) void {
+    fn print(self: Lexer) void {
         std.debug.print("EDI: {s}\n", .{self.input});
     }
 
     // return the next token
-    pub fn next(self: Lexer) void {
-        var index: u8 = 0;
-        while (true) : (index += 1) {
-            if (index >= self.input.len) {
+    pub fn next(self: *Lexer) void {
+        while (true) : (self.pos += 1) {
+            if (self.pos >= self.input.len) {
+                self.at_eof = true;
                 break;
             }
-            if (self.input[index] == '*') {
-                std.debug.print("token: {s}\n", .{self.input[0..index]});
+            if (self.input[self.pos] == element_sep) {
+                std.debug.print("token: {s}\n", .{self.input[self.start..self.pos]});
+                self.start = self.pos;
             }
         }
     }
@@ -45,8 +59,11 @@ const Lexer = struct {
 
 test "str" {
     const s = "TST*123";
-    const lexer = Lexer.init(s);
+    var lexer = Lexer.init(s, 0, 0, false);
     lexer.next();
+    lexer.next();
+    //const v: Item = lexer.next();
+    //v.print();
 }
 
 test "str2" {
@@ -66,5 +83,5 @@ test "str2" {
         \\ EQ*30~
         \\ SE*13*1234~
     ;
-    _ = Lexer.init(s);
+    _ = Lexer.init(s, 0, 0, false);
 }
