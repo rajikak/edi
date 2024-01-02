@@ -6,11 +6,25 @@ const eof: u8 = -1;
 const segment_sep: u8 = '~';
 const element_sep: u8 = '*';
 
-pub const ItemType = enum {
+const ItemType = enum {
     err, // error occured; value is the text of error
     eof,
     identifier, // elemenet identifier
     val, // a value
+
+    fn asstr(self: ItemType) []const u8 {
+        if (self == ItemType.err) {
+            return "ItemType => err";
+        } else if (self == ItemType.eof) {
+            return "ItemType => eof";
+        } else if (self == ItemType.identifier) {
+            return "ItemType => identifier";
+        } else if (self == ItemType.val) {
+            return "ItemType => val";
+        } else {
+            return "ItemType => uknown";
+        }
+    }
 };
 
 // item represents a token of a text string returned from the scanner
@@ -25,10 +39,10 @@ const Item = struct {
     }
 
     pub fn print(self: Item) void {
-        std.debug.print("item{type = {}, }}", .{self.typ});
-        std.debug.print("pos = {}, ", .{self.pos});
-        std.debug.print("val = {}, ", .{self.pos});
-        std.debug.print("line = {}\n", .{self.line});
+        std.debug.print("item{type = {s}, }}", .{self.typ.asstr()});
+        std.debug.print("pos = {d}, ", .{self.pos});
+        std.debug.print("val = {s}, ", .{self.val});
+        std.debug.print("line = {d}\n", .{self.line});
     }
 };
 
@@ -49,17 +63,16 @@ const Lexer = struct {
     // return the next token
     pub fn next(self: *Lexer) Item {
         const line: u8 = 0;
-        std.debug.print("input={s}\n", .{self.input});
         while (true) : (self.pos += 1) {
-            std.debug.print("start = {}, ", .{self.start});
-            std.debug.print("pos = {}\n", .{self.pos});
+            //std.debug.print("start = {}, ", .{self.start});
+            //std.debug.print("pos = {}\n", .{self.pos});
             if (self.pos >= self.input.len) {
                 self.at_eof = true;
                 return Item.init(ItemType.eof, self.pos, "", line);
             }
             if (self.input[self.pos] == element_sep) {
-                const itemv = self.input[self.start..self.pos];
-                std.debug.print("token: {s}\n", .{itemv});
+                const itemv: []const u8 = self.input[self.start..self.pos];
+                //std.debug.print("token: {s}\n", .{itemv});
                 self.pos += 1; // skip element seperator
                 self.start = self.pos;
                 return Item.init(ItemType.val, self.pos, itemv, line);
