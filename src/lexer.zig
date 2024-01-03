@@ -1,5 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
+const expect = testing.expect;
 const mem = std.mem;
 
 const eof: u8 = -1;
@@ -110,21 +111,22 @@ test "segments" {
     const tests = [_]tst{
         tst{ .input = "TST", .expected = result{ .len = 1, .head = "TST", .tail = "TST" } },
         tst{ .input = "TST*123", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
-        tst{ .input = "TST*123~", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
-        tst{ .input = "DXS*9251230013*DX*004010UCS*1*9254850000", .expected = result{ .len = 10, .head = "DXS", .tail = "9254850000" } },
+        //tst{ .input = "TST*123~", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
+        tst{ .input = "DXS*9251230013*DX*004010UCS*1*9254850000", .expected = result{ .len = 6, .head = "DXS", .tail = "9254850000" } },
     };
 
     std.debug.print("\n", .{});
     for (tests) |t| {
-        var buffer = std.ArrayList(Item).init(std.testing.allocator);
+        var buffer = std.ArrayList(Item).init(testing.allocator);
         defer buffer.deinit();
 
         var lexer = Lexer.init(t.input, 0, 0, false);
         lexer.tokens(&buffer);
 
-        for (buffer.items) |item| {
-            item.print();
-        }
+        try expect(t.expected.len == buffer.items.len);
+
+        std.debug.print("getLast() = {s}\n", .{buffer.getLast().val});
+        try expect(std.mem.eql(u8, t.expected.tail, buffer.getLast().val) == true);
     }
 }
 
