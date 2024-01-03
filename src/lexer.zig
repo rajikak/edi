@@ -88,7 +88,7 @@ const Lexer = struct {
 
         while (true) {
             const token: Item = lexer.next();
-            try store.append(token);
+            store.append(token) catch std.debug.print("out of memory occured\n", .{});
             if (token.typ == ItemType.eof) {
                 break;
             }
@@ -111,7 +111,7 @@ test "segments" {
         tst{ .input = "TST", .expected = result{ .len = 1, .head = "TST", .tail = "TST" } },
         tst{ .input = "TST*123", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
         tst{ .input = "TST*123~", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
-        //tst{ .input = "DXS*9251230013*DX*004010UCS*1*9254850000", .expected = "DXS" },
+        tst{ .input = "DXS*9251230013*DX*004010UCS*1*9254850000", .expected = result{ .len = 10, .head = "DXS", .tail = "9254850000" } },
     };
 
     std.debug.print("\n", .{});
@@ -121,6 +121,10 @@ test "segments" {
 
         var lexer = Lexer.init(t.input, 0, 0, false);
         lexer.tokens(&buffer);
+
+        for (buffer.items) |item| {
+            item.print();
+        }
     }
 }
 
