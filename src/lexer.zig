@@ -39,8 +39,7 @@ const Item = struct {
     }
 
     pub fn print(self: Item) void {
-        std.debug.print("item{type = {s}, }}", .{self.typ.asstr()});
-        std.debug.print("pos = {d}, ", .{self.pos});
+        std.debug.print("item{{type = {s}, ", .{self.typ.asstr()});
         std.debug.print("val = {s}, ", .{self.val});
         std.debug.print("line = {d}\n", .{self.line});
     }
@@ -61,38 +60,71 @@ const Lexer = struct {
     }
 
     // return the next token
-    pub fn next(self: *Lexer) Item {
+    fn next(self: *Lexer) Item {
         const line: u8 = 0;
         while (true) : (self.pos += 1) {
-            //std.debug.print("start = {}, ", .{self.start});
-            //std.debug.print("pos = {}\n", .{self.pos});
+            const itemv: []const u8 = self.input[self.start..self.pos];
             if (self.pos >= self.input.len) {
                 self.at_eof = true;
-                return Item.init(ItemType.eof, self.pos, "", line);
+                return Item.init(ItemType.eof, self.pos, itemv, line);
             }
             if (self.input[self.pos] == element_sep) {
-                const itemv: []const u8 = self.input[self.start..self.pos];
                 //std.debug.print("token: {s}\n", .{itemv});
                 self.pos += 1; // skip element seperator
                 self.start = self.pos;
                 return Item.init(ItemType.val, self.pos, itemv, line);
             }
+
+            //if (self.input[self.pos] == segment_sep) {
+            //    self.pos += 1; // skip segment seperator
+            //    self.start = self.pos;
+            //    return Item.init()
+            //}
+        }
+    }
+
+    fn tokens(self: *Lexer, store: *std.ArrayList(Item)) void {
+        var lexer = init(self.input, 0, 0, false);
+
+        while (true) {
+            const token: Item = lexer.next();
+            try store.append(token);
+            if (token.typ == ItemType.eof) {
+                break;
+            }
         }
     }
 };
 
-test "str" {
-    _ = "DXS*9251230013*DX*004010UCS*1*9254850000";
-    const s = "TST*123";
-    var lexer = Lexer.init(s, 0, 0, false);
-    const t1 = lexer.next();
-    t1.print();
+test "segments" {
+    const result = struct {
+        len: u8,
+        head: []const u8,
+        tail: []const u8,
+    };
+    const tst = struct {
+        input: []const u8,
+        expected: result,
+    };
 
-    const t2 = lexer.next();
-    t2.print();
+    const tests = [_]tst{
+        tst{ .input = "TST", .expected = result{ .len = 1, .head = "TST", .tail = "TST" } },
+        tst{ .input = "TST*123", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
+        tst{ .input = "TST*123~", .expected = result{ .len = 2, .head = "TST", .tail = "123" } },
+        //tst{ .input = "DXS*9251230013*DX*004010UCS*1*9254850000", .expected = "DXS" },
+    };
+
+    std.debug.print("\n", .{});
+    for (tests) |t| {
+        var buffer = std.ArrayList(Item).init(std.testing.allocator);
+        defer buffer.deinit();
+
+        var lexer = Lexer.init(t.input, 0, 0, false);
+        lexer.tokens(&buffer);
+    }
 }
 
-test "str2" {
+test "large segments" {
     // a sample EDI
     const s =
         \\ ST*270*1234*005010X279A1~
