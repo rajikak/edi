@@ -2,10 +2,11 @@ const std = @import("std");
 const testing = std.testing;
 const expect = testing.expect;
 const mem = std.mem;
+const test_allocator = std.testing.allocator;
 
 const eof: u8 = -1;
-const segment_sep: u8 = '~';
-const element_sep: u8 = '*';
+const default_segment_sep: u8 = '~';
+const default_element_sep: u8 = '*';
 
 const TokenType = enum {
     err, // error occured; value is the text of error
@@ -84,24 +85,9 @@ const Lexer = struct {
         const line: u8 = 0;
 
         const ele_sep = self.options.ele_sep;
-        const ele_sep_str = "*";
-
         const seg_sep = self.options.seg_sep;
-        const seg_sep_str = "~";
 
         while (true) : (self.pos += 1) {
-            //const itemv: []const u8 = self.input[self.start..self.pos];
-            //if (self.pos >= self.input.len) {
-            //    self.at_eof = true;
-            //    return Token.init(TokenType.eof, self.pos, itemv, line);
-            //}
-            //if (self.input[self.pos] == element_sep) {
-            //std.debug.print("token: {s}\n", .{itemv});
-            //    self.pos += 1; // skip element seperator
-            //    self.start = self.pos;
-            //    return Token.init(TokenType.val, self.pos, itemv, line);
-            //}
-
             if (self.pos + 1 == self.input.len) {
                 self.at_eof = true;
                 const tv: []const u8 = self.input[self.start .. self.pos + 1];
@@ -117,11 +103,11 @@ const Lexer = struct {
             } else if (self.input[self.pos] == ele_sep) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.ele_sep, self.pos, ele_sep_str, line);
+                return Token.init(TokenType.ele_sep, self.pos, "*", line);
             } else if (self.input[self.pos] == seg_sep) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.seg_sep, self.pos, seg_sep_str, line);
+                return Token.init(TokenType.seg_sep, self.pos, "~", line);
             } else {
                 continue;
             }
@@ -131,7 +117,7 @@ const Lexer = struct {
     fn tokens(self: *Lexer, store: *std.ArrayList(Token)) void {
         while (true) {
             const token: Token = self.next();
-            store.append(token) catch std.debug.print("out of memory occured\n", .{});
+            store.append(token) catch @panic("out of memory occured");
             if (token.typ == TokenType.eof) {
                 break;
             }
@@ -142,36 +128,42 @@ const Lexer = struct {
 test "segments" {
     const result = struct {
         len: u8,
-        head: []const u8,
-        tail: []const u8,
+        last: []const u8,
+    };
+
+    const input = struct {
+        s: []const u8,
+        default_sep: bool,
     };
     const tst = struct {
-        input: []const u8,
+        input: input,
         expected: result,
     };
 
     const tests = [_]tst{
-        tst{ .input = "TST", .expected = result{ .len = 1, .head = "TST", .tail = "TST" } },
-        tst{ .input = "TST~", .expected = result{ .len = 2, .head = "TST", .tail = "~" } },
-        tst{ .input = "TST*123", .expected = result{ .len = 3, .head = "TST", .tail = "123" } },
-        tst{ .input = "TST*123~", .expected = result{ .len = 4, .head = "TST", .tail = "~" } },
-        tst{ .input = "DXS*9251230013*DX*004010UCS*1*9254850000", .expected = result{ .len = 11, .head = "DXS", .tail = "9254850000" } },
+        tst{ .input = input{ .s = "TST", .default_sep = true }, .expected = result{ .len = 1, .last = "TST" } },
+        tst{ .input = input{ .s = "TST~", .default_sep = true }, .expected = result{ .len = 2, .last = "~" } },
+        tst{ .input = input{ .s = "TST*123", .default_sep = true }, .expected = result{ .len = 3, .last = "123" } },
+        tst{ .input = input{ .s = "TST*123~", .default_sep = true }, .expected = result{ .len = 4, .last = "~" } },
+        tst{ .input = input{ .s = "DXS*9251230013*DX*004010UCS*1*9254850000", .default_sep = true }, .expected = result{ .len = 11, .last = "9254850000" } },
+        tst{ .input = input{ .s = "DXS_9251230013_DX_004010UCS_1_9254850000", .default_sep = false }, .expected = result{ .len = 11, .last = "9254850000" } },
     };
 
-    std.debug.print("\n", .{});
     for (tests) |t| {
-        var buffer = std.ArrayList(Token).init(testing.allocator);
+        var buffer = std.ArrayList(Token).init(test_allocator);
         defer buffer.deinit();
 
-        var options = LexerOptions.init(segment_sep, element_sep);
-        var lexer = Lexer.init(t.input, 0, 0, false, options);
+        var ele_sep: u8 = '_';
+
+        if (t.input.default_sep) {
+            ele_sep = default_element_sep;
+        }
+        var options = LexerOptions.init(default_segment_sep, ele_sep);
+        var lexer = Lexer.init(t.input.s, 0, 0, false, options);
         lexer.tokens(&buffer);
 
-        std.debug.print("len = {d}\n", .{buffer.items.len});
         try expect(t.expected.len == buffer.items.len);
-
-        std.debug.print("getLast() = {s}\n", .{buffer.getLast().val});
-        try expect(std.mem.eql(u8, t.expected.tail, buffer.getLast().val) == true);
+        try expect(std.mem.eql(u8, t.expected.last, buffer.getLast().val) == true);
     }
 }
 
@@ -192,6 +184,6 @@ test "large segments" {
         \\ EQ*30~
         \\ SE*13*1234~
     ;
-    var options = LexerOptions.init(segment_sep, element_sep);
+    var options = LexerOptions.init(default_segment_sep, default_element_sep);
     _ = Lexer.init(s, 0, 0, false, options);
 }
