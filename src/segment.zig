@@ -6,7 +6,7 @@ const Segment = struct {
     position: []const u8, // position in the document
     required: bool, // if this segment is required
     description: []const u8, // description of the segment
-    max: u8, // max use allowe
+    max: u8, // max use allowed
 
     pub fn init(val: SegmentType, position: []const u8, required: bool, description: []const u8, max: u8) Segment {
         return Segment{
