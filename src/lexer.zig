@@ -6,7 +6,10 @@ const test_allocator = std.testing.allocator;
 
 const eof: u8 = -1;
 const default_segment_sep: u8 = '~';
+const default_segment_sep_as_str: []const u8 = "~";
+
 const default_element_sep: u8 = '*';
+const default_element_sep_as_str: []const u8 = "*";
 
 const TokenType = enum {
     err, // error occured; value is the text of error
@@ -85,7 +88,10 @@ const Lexer = struct {
         const line: u8 = 0;
 
         const ele_sep = self.options.ele_sep;
+        const ele_sep_str = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{ele_sep}) catch default_element_sep_as_str;
+
         const seg_sep = self.options.seg_sep;
+        const seg_sep_str = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{seg_sep}) catch default_segment_sep_as_str;
 
         while (true) : (self.pos += 1) {
             if (self.pos + 1 == self.input.len) {
@@ -103,11 +109,11 @@ const Lexer = struct {
             } else if (self.input[self.pos] == ele_sep) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.ele_sep, self.pos, "*", line);
+                return Token.init(TokenType.ele_sep, self.pos, ele_sep_str, line);
             } else if (self.input[self.pos] == seg_sep) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.seg_sep, self.pos, "~", line);
+                return Token.init(TokenType.seg_sep, self.pos, seg_sep_str, line);
             } else {
                 continue;
             }
