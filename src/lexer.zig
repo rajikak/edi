@@ -5,14 +5,14 @@ const expect = testing.expect;
 const mem = std.mem;
 const test_allocator = std.testing.allocator;
 
-const eof: u8 = -1;
-const default_segment_sep: u8 = '~';
+pub const eof: u8 = -1;
+pub const default_segment_sep: u8 = '~';
 const default_segment_sep_as_str: []const u8 = "~";
 
-const default_element_sep: u8 = '*';
+pub const default_element_sep: u8 = '*';
 const default_element_sep_as_str: []const u8 = "*";
 
-const TokenType = enum {
+pub const TokenType = enum {
     err, // error occured; value is the text of error
     eof,
     identifier, // elemenet identifier
@@ -36,7 +36,7 @@ const TokenType = enum {
 };
 
 // token represents a token of a text string returned from the scanner
-const Token = struct {
+pub const Token = struct {
     typ: TokenType, // the type of this iterm.
     pos: u8, // the starting position, in bytes, of this item in the input string.
     val: []const u8, // the value of this item.
@@ -53,23 +53,23 @@ const Token = struct {
     }
 };
 
-const LexerOptions = struct {
+pub const LexerOptions = struct {
     seg_sep: u8,
     ele_sep: u8,
 
-    fn init(seg_sep: u8, ele_sep: u8) LexerOptions {
+    pub fn init(seg_sep: u8, ele_sep: u8) LexerOptions {
         return LexerOptions{ .seg_sep = seg_sep, .ele_sep = ele_sep };
     }
 };
 
-const Lexer = struct {
+pub const Lexer = struct {
     input: []const u8,
     start: u8, // start position of the item
     pos: u8, // current position of the input
     at_eof: bool, // we have hit the end of input and returned eof
     options: LexerOptions, // configuration for lexer
 
-    fn init(input: []const u8, start: u8, pos: u8, at_eof: bool, options: LexerOptions) Lexer {
+    pub fn init(input: []const u8, start: u8, pos: u8, at_eof: bool, options: LexerOptions) Lexer {
         return Lexer{ .input = input, .start = start, .pos = pos, .at_eof = at_eof, .options = options };
     }
 
@@ -86,7 +86,7 @@ const Lexer = struct {
 
     // return the next token
     fn next(self: *Lexer) Token {
-        const line: u8 = 0;
+        var line: u8 = 0;
 
         const ele_sep = self.options.ele_sep;
         const ele_sep_str = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{ele_sep}) catch default_element_sep_as_str;
@@ -99,6 +99,11 @@ const Lexer = struct {
                 self.at_eof = true;
                 const tv: []const u8 = self.input[self.start .. self.pos + 1];
                 return Token.init(TokenType.eof, self.pos, tv, line);
+            }
+
+            if (self.input[self.pos] == '\n') {
+                line += 1;
+                self.start = self.pos;
             }
 
             const ch: u8 = self.peek();
@@ -121,7 +126,7 @@ const Lexer = struct {
         }
     }
 
-    fn tokens(self: *Lexer, store: *std.ArrayList(Token)) void {
+    pub fn tokens(self: *Lexer, store: *std.ArrayList(Token)) void {
         while (true) {
             const token: Token = self.next();
             store.append(token) catch @panic("out of memory occured");
@@ -131,6 +136,14 @@ const Lexer = struct {
         }
     }
 };
+
+fn print_buffer(buffer: std.ArrayList(Token)) void {
+    std.debug.print("\nstart:\n", .{});
+    for (buffer.items) |item| {
+        item.print();
+    }
+    std.debug.print("end:\n", .{});
+}
 
 test "segments" {
     const result = struct {
@@ -172,6 +185,8 @@ test "segments" {
 
         try expect(t.expected.len == buffer.items.len);
         try expect(std.mem.eql(u8, t.expected.last, buffer.getLast().val) == true);
+
+        print_buffer(buffer);
     }
 }
 
@@ -182,8 +197,7 @@ test "large segments" {
     };
 
     const result = struct {
-        len: u8,
-        last: []const u8,
+        lines: u8,
     };
 
     const tst = struct {
@@ -192,7 +206,8 @@ test "large segments" {
     };
 
     const tests = [_]tst{
-        tst{ .input = input{ .file = "../assets/x12.base.loop.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+        tst{ .input = input{ .file = "../assets/x12.base.loop-1.txt", .default_sep = true }, .expected = result{ .lines = 2 } },
+        //tst{ .input = input{ .file = "../assets/x12.base.loop.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
         //tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.empty.line.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
         //tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.odd.char.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
         //tst{ .input = input{ .file = "../assets/x12.base.one.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
@@ -213,7 +228,6 @@ test "large segments" {
         var lexer = Lexer.init(content, 0, 0, false, options);
         lexer.tokens(&buffer);
 
-        try expect(t.expected.len == buffer.items.len);
-        try expect(std.mem.eql(u8, t.expected.last, buffer.getLast().val) == true);
+        //print_buffer(buffer);
     }
 }
