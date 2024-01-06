@@ -11,18 +11,42 @@ pub const transaction_set = struct {
     header: Segment,
     trailer: Segment,
     segments: std.ArrayList(Segment),
+
+    pub fn init() transaction_set {
+        return transaction_set{
+            .header = Segment.init(),
+            .trailer = Segment.init(),
+            .segments = std.ArrayList(Segment).init(),
+        };
+    }
 };
 
 pub const functional_grp = struct {
     header: Segment,
     trailer: Segment,
     transactions: std.ArrayList(transaction_set),
+
+    pub fn init() functional_grp {
+        return functional_grp{
+            .header = Segment.init(),
+            .trailer = Segment.init(),
+            .transactions = std.ArrayList(transaction_set).init(),
+        };
+    }
 };
 
 pub const interchange_ctrl = struct {
     header: Segment,
     trailer: Segment,
     fun_grps: std.ArrayList(functional_grp),
+
+    pub fn init() interchange_ctrl {
+        return interchange_ctrl{
+            .header = Segment.init(),
+            .trailer = Segment.init(),
+            .fun_grps = std.ArrayList(functional_grp).init(),
+        };
+    }
 };
 
 pub const x12 = struct {

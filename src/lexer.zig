@@ -1,4 +1,5 @@
 const std = @import("std");
+const lib = @import("lib.zig");
 const testing = std.testing;
 const expect = testing.expect;
 const mem = std.mem;
@@ -141,6 +142,7 @@ test "segments" {
         s: []const u8,
         default_sep: bool,
     };
+
     const tst = struct {
         input: input,
         expected: result,
@@ -174,22 +176,44 @@ test "segments" {
 }
 
 test "large segments" {
-    // a sample EDI
-    const s =
-        \\ ST*270*1234*005010X279A1~
-        \\ BHT*0022*13*10001234*20060501*1319~
-        \\ HL*1**20*1~
-        \\ NM1*PR*2*ABC COMPANY*****PI*842610001~
-        \\ HL*2*1*21*1~
-        \\ NM1*1P*2*BONE AND JOINT CLINIC*****SV*2000035~
-        \\ HL*3*2*22*0~
-        \\ TRN*1*93175-012547*9877281234~
-        \\ NM1*IL*1*SMITH*ROBERT****MI*11122333301~
-        \\ DMG*D8*19430519~
-        \\ DTP*291*D8*20060501~
-        \\ EQ*30~
-        \\ SE*13*1234~
-    ;
-    var options = LexerOptions.init(default_segment_sep, default_element_sep);
-    _ = Lexer.init(s, 0, 0, false, options);
+    const input = struct {
+        file: []const u8,
+        default_sep: bool,
+    };
+
+    const result = struct {
+        len: u8,
+        last: []const u8,
+    };
+
+    const tst = struct {
+        input: input,
+        expected: result,
+    };
+
+    const tests = [_]tst{
+        tst{ .input = input{ .file = "../assets/x12.base.loop.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+        //tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.empty.line.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+        //tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.odd.char.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+        //tst{ .input = input{ .file = "../assets/x12.base.one.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+        //tst{ .input = input{ .file = "../assets/x12.base.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+    };
+
+    const allocator = std.heap.page_allocator;
+    for (tests) |t| {
+        var buffer = std.ArrayList(Token).init(test_allocator);
+        defer buffer.deinit();
+
+        var ele_sep: u8 = '_';
+        if (t.input.default_sep) {
+            ele_sep = default_element_sep;
+        }
+        const content = try lib.read_file(t.input.file, allocator);
+        var options = LexerOptions.init(default_segment_sep, ele_sep);
+        var lexer = Lexer.init(content, 0, 0, false, options);
+        lexer.tokens(&buffer);
+
+        try expect(t.expected.len == buffer.items.len);
+        try expect(std.mem.eql(u8, t.expected.last, buffer.getLast().val) == true);
+    }
 }
