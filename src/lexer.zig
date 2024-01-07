@@ -68,13 +68,32 @@ pub const Lexer = struct {
     pos: u8, // current position of the input
     at_eof: bool, // we have hit the end of input and returned eof
     options: LexerOptions, // configuration for lexer
+    buffer: std.ArrayList(Token), // buffer to hold tokens
 
     pub fn init(input: []const u8, start: u8, pos: u8, at_eof: bool, options: LexerOptions) Lexer {
-        return Lexer{ .input = input, .start = start, .pos = pos, .at_eof = at_eof, .options = options };
+        return Lexer{ .input = input, .start = start, .pos = pos, .at_eof = at_eof, .options = options, .buffer = std.ArrayList(Token).init(std.heap.page_allocator) };
     }
 
-    fn print(self: Lexer) void {
+    pub fn deinit(self: Lexer) void {
+        defer self.buffer.deinit();
+    }
+
+    pub fn plexstr(self: Lexer) void {
         std.debug.print("EDI: {s}\n", .{self.input});
+    }
+
+    pub fn pbuffer(self: Lexer) void {
+        for (self.buffer.items) |item| {
+            item.print();
+        }
+    }
+
+    pub fn size(self: Lexer) usize {
+        return self.buffer.items.len;
+    }
+
+    pub fn last(self: Lexer) Token {
+        return self.buffer.getLast();
     }
 
     fn peek(self: Lexer) u8 {
@@ -130,10 +149,10 @@ pub const Lexer = struct {
         }
     }
 
-    pub fn tokens(self: *Lexer, store: *std.ArrayList(Token)) void {
+    pub fn tokens(self: *Lexer) void {
         while (true) {
             const token: Token = self.next();
-            store.append(token) catch @panic("out of memory occured");
+            self.buffer.append(token) catch @panic("out of memory occured");
             if (token.typ == TokenType.eof) {
                 break;
             }
@@ -174,9 +193,6 @@ test "segments" {
     };
 
     for (tests) |t| {
-        var buffer = std.ArrayList(Token).init(test_allocator);
-        defer buffer.deinit();
-
         var ele_sep: u8 = '_';
 
         if (t.input.default_sep) {
@@ -184,12 +200,14 @@ test "segments" {
         }
         var options = LexerOptions.init(default_segment_sep, ele_sep);
         var lexer = Lexer.init(t.input.s, 0, 0, false, options);
-        lexer.tokens(&buffer);
+        lexer.tokens();
 
-        try expect(t.expected.len == buffer.items.len - 1);
-        try expect(std.mem.eql(u8, t.expected.last, buffer.getLast().val) == true);
+        try expect(t.expected.len == lexer.size() - 1);
+        try expect(std.mem.eql(u8, t.expected.last, lexer.last().val) == true);
 
-        print_buffer(t.input.s, buffer);
+        lexer.plexstr();
+        lexer.pbuffer();
+        lexer.deinit();
     }
 }
 
@@ -219,9 +237,6 @@ test "large segments" {
 
     const allocator = std.heap.page_allocator;
     for (tests) |t| {
-        var buffer = std.ArrayList(Token).init(test_allocator);
-        defer buffer.deinit();
-
         var ele_sep: u8 = '_';
         if (t.input.default_sep) {
             ele_sep = default_element_sep;
@@ -229,8 +244,10 @@ test "large segments" {
         const content = try lib.read_file(t.input.file, allocator);
         var options = LexerOptions.init(default_segment_sep, ele_sep);
         var lexer = Lexer.init(content, 0, 0, false, options);
-        lexer.tokens(&buffer);
+        lexer.tokens();
 
-        //print_buffer(content, buffer);
+        lexer.plexstr();
+        lexer.pbuffer();
+        lexer.deinit();
     }
 }
