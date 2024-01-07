@@ -7,6 +7,7 @@ const SegmentType = seg.SegmentType;
 const Segment = seg.Segment;
 const LexerOptions = lex.LexerOptions;
 const Lexer = lex.Lexer;
+const print_buffer = lex.print_buffer;
 
 const Token = lex.Token;
 
@@ -27,12 +28,14 @@ pub fn main() !void {
 
     var options = LexerOptions.init(lex.default_segment_sep, ele_sep);
     if (use_file) {
-        const content = try lib.read_file(file, allocator);
-        var lexer = Lexer.init(content, 0, 0, false, options);
+        const s = try lib.read_file(file, allocator);
+        var lexer = Lexer.init(s, 0, 0, false, options);
         lexer.tokens(&buffer);
+        print_buffer(s, buffer);
     } else {
         const s = "GS*SH*4405197800*999999999*20111206*1045*00*X*004060";
         var lexer = Lexer.init(s, 0, 0, false, options);
         lexer.tokens(&buffer);
+        print_buffer(s, buffer);
     }
 }

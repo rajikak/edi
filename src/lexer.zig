@@ -95,10 +95,14 @@ pub const Lexer = struct {
         const seg_sep_str = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{seg_sep}) catch default_segment_sep_as_str;
 
         while (true) : (self.pos += 1) {
-            if (self.pos + 1 == self.input.len) {
+            if (self.pos == self.input.len) {
                 self.at_eof = true;
+                return Token.init(TokenType.eof, self.pos, "", line);
+            }
+            if (self.pos + 1 == self.input.len) {
                 const tv: []const u8 = self.input[self.start .. self.pos + 1];
-                return Token.init(TokenType.eof, self.pos, tv, line);
+                self.pos += 1;
+                return Token.init(TokenType.identifier, self.pos, tv, line);
             }
 
             if (self.input[self.pos] == '\n') {
@@ -108,7 +112,7 @@ pub const Lexer = struct {
 
             const ch: u8 = self.peek();
             if (ch == self.options.ele_sep or ch == self.options.seg_sep) {
-                const tv: []const u8 = self.input[self.start..self.pos];
+                const tv: []const u8 = self.input[self.start .. self.pos + 1];
                 self.pos += 1;
                 self.start = self.pos;
                 return Token.init(TokenType.identifier, self.pos, tv, line);
@@ -137,12 +141,11 @@ pub const Lexer = struct {
     }
 };
 
-fn print_buffer(buffer: std.ArrayList(Token)) void {
-    std.debug.print("\nstart:\n", .{});
+pub fn print_buffer(s: []const u8, buffer: std.ArrayList(Token)) void {
+    std.debug.print("\n{s}\n", .{s});
     for (buffer.items) |item| {
         item.print();
     }
-    std.debug.print("end:\n", .{});
 }
 
 test "segments" {
@@ -183,10 +186,10 @@ test "segments" {
         var lexer = Lexer.init(t.input.s, 0, 0, false, options);
         lexer.tokens(&buffer);
 
-        try expect(t.expected.len == buffer.items.len);
+        try expect(t.expected.len == buffer.items.len - 1);
         try expect(std.mem.eql(u8, t.expected.last, buffer.getLast().val) == true);
 
-        print_buffer(buffer);
+        print_buffer(t.input.s, buffer);
     }
 }
 
@@ -228,6 +231,6 @@ test "large segments" {
         var lexer = Lexer.init(content, 0, 0, false, options);
         lexer.tokens(&buffer);
 
-        //print_buffer(buffer);
+        //print_buffer(content, buffer);
     }
 }
