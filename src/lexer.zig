@@ -4,6 +4,7 @@ const testing = std.testing;
 const expect = testing.expect;
 const mem = std.mem;
 const test_allocator = std.testing.allocator;
+const allocator = std.heap.page_allocator;
 
 pub const eof: u8 = -1;
 pub const default_segment_sep: u8 = '~';
@@ -71,7 +72,8 @@ pub const Lexer = struct {
     buffer: std.ArrayList(Token), // buffer to hold tokens
 
     pub fn init(input: []const u8, start: u8, pos: u8, at_eof: bool, options: LexerOptions) Lexer {
-        return Lexer{ .input = input, .start = start, .pos = pos, .at_eof = at_eof, .options = options, .buffer = std.ArrayList(Token).init(std.heap.page_allocator) };
+        var buf = std.ArrayList(Token).init(std.heap.page_allocator);
+        return Lexer{ .input = input, .start = start, .pos = pos, .at_eof = at_eof, .options = options, .buffer = buf };
     }
 
     pub fn deinit(self: Lexer) void {
@@ -92,15 +94,19 @@ pub const Lexer = struct {
         return self.buffer.items.len;
     }
 
-    pub fn last(self: Lexer) Token {
-        return self.buffer.getLast();
-    }
-
     fn peek(self: Lexer) u8 {
         if (self.pos + 1 < self.input.len) {
             return self.input[self.pos + 1];
         }
         return 0;
+    }
+
+    fn value(self: Lexer) []const u8 {
+        var str: []const u8 = "";
+        for (self.buffer.items) |item| {
+            str = std.fmt.allocPrint(allocator, "{s}{s}", .{ str, item.val }) catch "format failed";
+        }
+        return str;
     }
 
     // return the next token
@@ -160,17 +166,9 @@ pub const Lexer = struct {
     }
 };
 
-pub fn print_buffer(s: []const u8, buffer: std.ArrayList(Token)) void {
-    std.debug.print("\n{s}\n", .{s});
-    for (buffer.items) |item| {
-        item.print();
-    }
-}
-
 test "segments" {
     const result = struct {
         len: u8,
-        last: []const u8,
     };
 
     const input = struct {
@@ -184,12 +182,12 @@ test "segments" {
     };
 
     const tests = [_]tst{
-        tst{ .input = input{ .s = "TST", .default_sep = true }, .expected = result{ .len = 1, .last = "TST" } },
-        tst{ .input = input{ .s = "TST~", .default_sep = true }, .expected = result{ .len = 2, .last = "~" } },
-        tst{ .input = input{ .s = "TST*123", .default_sep = true }, .expected = result{ .len = 3, .last = "123" } },
-        tst{ .input = input{ .s = "TST*123~", .default_sep = true }, .expected = result{ .len = 4, .last = "~" } },
-        tst{ .input = input{ .s = "DXS*9251230013*DX*004010UCS*1*9254850000", .default_sep = true }, .expected = result{ .len = 11, .last = "9254850000" } },
-        tst{ .input = input{ .s = "DXS_9251230013_DX_004010UCS_1_9254850000", .default_sep = false }, .expected = result{ .len = 11, .last = "9254850000" } },
+        tst{ .input = input{ .s = "TST", .default_sep = true }, .expected = result{ .len = 1 } },
+        tst{ .input = input{ .s = "TST~", .default_sep = true }, .expected = result{ .len = 2 } },
+        tst{ .input = input{ .s = "TST*123", .default_sep = true }, .expected = result{ .len = 3 } },
+        tst{ .input = input{ .s = "TST*123~", .default_sep = true }, .expected = result{ .len = 4 } },
+        tst{ .input = input{ .s = "DXS*9251230013*DX*004010UCS*1*9254850000", .default_sep = true }, .expected = result{ .len = 11 } },
+        tst{ .input = input{ .s = "DXS_9251230013_DX_004010UCS_1_9254850000", .default_sep = false }, .expected = result{ .len = 11 } },
     };
 
     for (tests) |t| {
@@ -203,11 +201,7 @@ test "segments" {
         lexer.tokens();
 
         try expect(t.expected.len == lexer.size() - 1);
-        try expect(std.mem.eql(u8, t.expected.last, lexer.last().val) == true);
-
-        lexer.plexstr();
-        lexer.pbuffer();
-        lexer.deinit();
+        try expect(std.mem.eql(u8, t.input.s, lexer.value()) == true);
     }
 }
 
@@ -235,19 +229,15 @@ test "large segments" {
         //tst{ .input = input{ .file = "../assets/x12.base.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
     };
 
-    const allocator = std.heap.page_allocator;
     for (tests) |t| {
         var ele_sep: u8 = '_';
         if (t.input.default_sep) {
             ele_sep = default_element_sep;
         }
-        const content = try lib.read_file(t.input.file, allocator);
+        const content = try lib.read_file(t.input.file, test_allocator);
+        defer test_allocator.free(content);
         var options = LexerOptions.init(default_segment_sep, ele_sep);
         var lexer = Lexer.init(content, 0, 0, false, options);
         lexer.tokens();
-
-        lexer.plexstr();
-        lexer.pbuffer();
-        lexer.deinit();
     }
 }
