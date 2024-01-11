@@ -1,14 +1,15 @@
 const std = @import("std");
 const lib = @import("lib.zig");
-const testing = std.testing;
-const expect = testing.expect;
 const mem = std.mem;
-const test_allocator = std.testing.allocator;
 const allocator = std.heap.page_allocator;
 
-pub const eof: u8 = -1;
-pub const default_segment_sep: u8 = '~';
-const default_segment_sep_as_str: []const u8 = "~";
+const testing = std.testing;
+const expect = testing.expect;
+const test_allocator = std.testing.allocator;
+
+pub const eof = "-1";
+pub const default_segment_sep = '~';
+pub const default_segment_sep_as_str: []const u8 = "~";
 
 pub const default_element_sep: u8 = '*';
 const default_element_sep_as_str: []const u8 = "*";
@@ -110,53 +111,63 @@ pub const Lexer = struct {
     fn value(self: Lexer) []const u8 {
         var str: []const u8 = "";
         for (self.buffer.items) |item| {
+            if (item.typ == TokenType.eof) {
+                continue;
+            }
             str = std.fmt.allocPrint(allocator, "{s}{s}", .{ str, item.val }) catch "format failed";
         }
         return str;
     }
 
-    // return the next token
+    // return the next token, loop ends when the token is TokenType.eof
     fn next(self: *Lexer) Token {
         var line: u8 = 0;
 
-        const ele_sep = self.options.ele_sep;
-        const ele_sep_str = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{ele_sep}) catch default_element_sep_as_str;
+        const ele_sep = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.ele_sep}) catch default_element_sep_as_str;
 
-        const seg_sep = self.options.seg_sep;
-        const seg_sep_str = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{seg_sep}) catch default_segment_sep_as_str;
+        const seg_sep = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.seg_sep}) catch default_segment_sep_as_str;
+
+        // ST*
+        // ST
+        // ST\n
+        // AS*ST
+        // AS*\nST
+        // ST*AAA
+        // TST*123
 
         while (true) : (self.pos += 1) {
             if (self.pos == self.input.len) {
                 self.at_eof = true;
-                return Token.init(TokenType.eof, self.pos, "", line);
+                return Token.init(TokenType.eof, self.pos, eof, line);
             }
-            if (self.pos + 1 == self.input.len) {
-                const tv: []const u8 = self.input[self.start .. self.pos + 1];
-                self.pos += 1;
-                return Token.init(TokenType.identifier, self.pos, tv, line);
-            }
-
-            if (self.input[self.pos] == '\n') {
-                line += 1;
-                continue;
-            }
-
-            const ch: u8 = self.peek();
-            if (ch == self.options.ele_sep or ch == self.options.seg_sep) {
-                const tv: []const u8 = self.input[self.start .. self.pos + 1];
+            const char = self.input[self.pos];
+            if (char == '\n' or char == self.options.seg_sep) {
+                if (char == '\n') {
+                    line += 1;
+                }
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.identifier, self.pos, tv, line);
-            } else if (self.input[self.pos] == ele_sep) {
+                // consider '\n' as a segement seperator
+                return Token.init(TokenType.seg_sep, self.pos, seg_sep, line);
+            } else if (char == self.options.ele_sep) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.ele_sep, self.pos, ele_sep_str, line);
-            } else if (self.input[self.pos] == seg_sep) {
-                self.pos += 1;
-                self.start = self.pos;
-                return Token.init(TokenType.seg_sep, self.pos, seg_sep_str, line);
+                return Token.init(TokenType.ele_sep, self.pos, ele_sep, line);
+            } else if (self.pos + 1 < self.input.len) {
+                const next_char: u8 = self.peek();
+                if (next_char == self.options.ele_sep or next_char == self.options.seg_sep) {
+                    const tv: []const u8 = self.input[self.start .. self.pos + 1];
+                    self.pos += 1;
+                    self.start = self.pos;
+                    return Token.init(TokenType.identifier, self.pos, tv, line);
+                } else {
+                    continue;
+                }
             } else {
-                continue;
+                const tv: []const u8 = self.input[self.start .. self.pos + 1];
+                self.pos += 1;
+                self.start = self.pos;
+                return Token.init(TokenType.identifier, self.pos, tv, line);
             }
         }
     }
@@ -164,8 +175,6 @@ pub const Lexer = struct {
     pub fn tokens(self: *Lexer) void {
         while (true) {
             const token: Token = self.next();
-            std.debug.print("\n", .{});
-            token.print();
             self.buffer.append(token) catch @panic("out of memory occured");
             if (token.typ == TokenType.eof) {
                 break;
@@ -190,7 +199,9 @@ test "segments" {
     };
 
     const tests = [_]tst{
-        //tst{ .input = input{ .s = "ST*AAA*0001", .default_sep = false }, .expected = result{ .len = 5 } },
+        tst{ .input = input{ .s = "ST*", .default_sep = true }, .expected = result{ .len = 2 } },
+        //tst{ .input = input{ .s = "ST*\n", .default_sep = true }, .expected = result{ .len = 1 } },
+        tst{ .input = input{ .s = "ST*AAA*0001", .default_sep = true }, .expected = result{ .len = 5 } },
         tst{ .input = input{ .s = "TST", .default_sep = true }, .expected = result{ .len = 1 } },
         tst{ .input = input{ .s = "TST~", .default_sep = true }, .expected = result{ .len = 2 } },
         tst{ .input = input{ .s = "TST*123", .default_sep = true }, .expected = result{ .len = 3 } },
@@ -208,7 +219,6 @@ test "segments" {
         var options = LexerOptions.init(default_segment_sep, ele_sep);
         var lexer = Lexer.init(t.input.s, options);
         lexer.tokens();
-        lexer.pbuffer();
 
         try expect(t.expected.len == lexer.size() - 1);
         try expect(std.mem.eql(u8, t.input.s, lexer.value()) == true);
