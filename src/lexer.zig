@@ -21,6 +21,7 @@ pub const TokenType = enum {
     val, // a value
     seg_sep, // segment seperator
     ele_sep, // element seperator
+    new_line, // new line
 
     fn asstr(self: TokenType) []const u8 {
         if (self == TokenType.err) {
@@ -35,6 +36,8 @@ pub const TokenType = enum {
             return "ItemType => segment seperator";
         } else if (self == TokenType.ele_sep) {
             return "ItemType => element seperator";
+        } else if (self == TokenType.new_line) {
+            return "ItemType => new line";
         } else {
             return "ItemType => uknown";
         }
@@ -141,13 +144,14 @@ pub const Lexer = struct {
                 return Token.init(TokenType.eof, self.pos, eof, line);
             }
             const char = self.input[self.pos];
-            if (char == '\n' or char == self.options.seg_sep) {
-                if (char == '\n') {
-                    line += 1;
-                }
+            if (char == '\n') {
+                line += 1;
                 self.pos += 1;
                 self.start = self.pos;
-                // consider '\n' as a segement seperator
+                return Token.init(TokenType.new_line, self.pos, "\n", line);
+            } else if (char == self.options.seg_sep) {
+                self.pos += 1;
+                self.start = self.pos;
                 return Token.init(TokenType.seg_sep, self.pos, seg_sep, line);
             } else if (char == self.options.ele_sep) {
                 self.pos += 1;
@@ -199,8 +203,11 @@ test "segments" {
     };
 
     const tests = [_]tst{
+        tst{ .input = input{ .s = "ST", .default_sep = true }, .expected = result{ .len = 1 } },
+        tst{ .input = input{ .s = "ST*\n", .default_sep = true }, .expected = result{ .len = 3 } },
+        tst{ .input = input{ .s = "ST*\nST", .default_sep = true }, .expected = result{ .len = 4 } },
+        tst{ .input = input{ .s = "AS*ST", .default_sep = true }, .expected = result{ .len = 3 } },
         tst{ .input = input{ .s = "ST*", .default_sep = true }, .expected = result{ .len = 2 } },
-        //tst{ .input = input{ .s = "ST*\n", .default_sep = true }, .expected = result{ .len = 1 } },
         tst{ .input = input{ .s = "ST*AAA*0001", .default_sep = true }, .expected = result{ .len = 5 } },
         tst{ .input = input{ .s = "TST", .default_sep = true }, .expected = result{ .len = 1 } },
         tst{ .input = input{ .s = "TST~", .default_sep = true }, .expected = result{ .len = 2 } },
