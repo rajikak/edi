@@ -25,21 +25,21 @@ pub const TokenType = enum {
 
     fn asstr(self: TokenType) []const u8 {
         if (self == TokenType.err) {
-            return "ItemType => err";
+            return "err";
         } else if (self == TokenType.eof) {
-            return "ItemType => eof";
+            return "eof";
         } else if (self == TokenType.identifier) {
-            return "ItemType => identifier";
+            return "identifier";
         } else if (self == TokenType.val) {
-            return "ItemType => val";
+            return "val";
         } else if (self == TokenType.seg_sep) {
-            return "ItemType => segment seperator";
+            return "segment seperator";
         } else if (self == TokenType.ele_sep) {
-            return "ItemType => element seperator";
+            return "element seperator";
         } else if (self == TokenType.new_line) {
-            return "ItemType => new line";
+            return "new line";
         } else {
-            return "ItemType => uknown";
+            return "uknown";
         }
     }
 };
@@ -56,12 +56,17 @@ pub const Token = struct {
     }
 
     pub fn print(self: Token) void {
-        std.debug.print("item{{type = {s}, ", .{self.typ.asstr()});
-        std.debug.print("val = {s}, ", .{self.val});
+        if (std.mem.eql(u8, self.val, "\n")) {
+            std.debug.print("val = \\n,", .{});
+        } else {
+            std.debug.print("val = {s}, ", .{self.val});
+        }
+        std.debug.print("type = {s}, ", .{self.typ.asstr()});
         std.debug.print("line = {d}\n", .{self.line});
     }
 };
 
+// configuration for the lexer
 pub const LexerOptions = struct {
     seg_sep: u8,
     ele_sep: u8,
@@ -122,6 +127,16 @@ pub const Lexer = struct {
         return str;
     }
 
+    fn lines(self: Lexer) u8 {
+        var n: u8 = 0;
+        for (self.buffer.items) |item| {
+            if (item.typ == TokenType.new_line) {
+                n += 1;
+            }
+        }
+        return n;
+    }
+
     // return the next token, loop ends when the token is TokenType.eof
     fn next(self: *Lexer) Token {
         var line: u8 = 0;
@@ -129,14 +144,6 @@ pub const Lexer = struct {
         const ele_sep = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.ele_sep}) catch default_element_sep_as_str;
 
         const seg_sep = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.seg_sep}) catch default_segment_sep_as_str;
-
-        // ST*
-        // ST
-        // ST\n
-        // AS*ST
-        // AS*\nST
-        // ST*AAA
-        // TST*123
 
         while (true) : (self.pos += 1) {
             if (self.pos == self.input.len) {
@@ -248,12 +255,15 @@ test "large segments" {
     };
 
     const tests = [_]tst{
-        //tst{ .input = input{ .file = "../assets/x12.base.loop-1.txt", .default_sep = true }, .expected = result{ .lines = 2 } },
-        //tst{ .input = input{ .file = "../assets/x12.base.loop.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
-        //tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.empty.line.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
-        //tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.odd.char.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
-        //tst{ .input = input{ .file = "../assets/x12.base.one.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
-        //tst{ .input = input{ .file = "../assets/x12.base.txt", .default_sep = true }, .expected = result{ .len = 10, .last = "000000049" } },
+        tst{ .input = input{ .file = "../assets/x12.base.loop-1.txt", .default_sep = true }, .expected = result{ .lines = 2 } },
+        tst{ .input = input{ .file = "../assets/x12.base.loop.txt", .default_sep = true }, .expected = result{ .lines = 24 } },
+        tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.empty.line.txt", .default_sep = true }, .expected = result{ .lines = 0 } },
+        tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.odd.char.txt", .default_sep = true }, .expected = result{ .lines = 0 } },
+        tst{ .input = input{ .file = "../assets/x12.base.one.txt", .default_sep = true }, .expected = result{ .lines = 6 } },
+        tst{ .input = input{ .file = "../assets/x12.missing.ISA.txt", .default_sep = true }, .expected = result{ .lines = 13 } },
+        tst{ .input = input{ .file = "../assets/x12.no.line.break.no.delim.txt", .default_sep = true }, .expected = result{ .lines = 0 } },
+        tst{ .input = input{ .file = "../assets/x12.wrong.GS.txt", .default_sep = true }, .expected = result{ .lines = 14 } },
+        tst{ .input = input{ .file = "../assets/x12.wrong.ISA.txt", .default_sep = true }, .expected = result{ .lines = 14 } },
     };
 
     for (tests) |t| {
@@ -267,8 +277,6 @@ test "large segments" {
         var lexer = Lexer.init(content, options);
         lexer.tokens();
 
-        std.debug.print("content: {s}\n", .{content});
-        std.debug.print("lexer: {s}\n", .{lexer.value()});
-        //try expect(std.mem.eql(u8, content, lexer.value()) == true);
+        try expect(t.expected.lines == lexer.lines());
     }
 }
