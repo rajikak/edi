@@ -210,7 +210,7 @@ test "segments" {
     };
 
     const tests = [_]tst{
-        tst{ .input = input{ .s = "ST", .default_sep = true }, .expected = result{ .len = 1 } },
+        tst{ .input = input{ .s = "X*004060*\n", .default_sep = true }, .expected = result{ .len = 5 } },
         tst{ .input = input{ .s = "ST*\n", .default_sep = true }, .expected = result{ .len = 3 } },
         tst{ .input = input{ .s = "ST*\nST", .default_sep = true }, .expected = result{ .len = 4 } },
         tst{ .input = input{ .s = "AS*ST", .default_sep = true }, .expected = result{ .len = 3 } },
@@ -255,7 +255,8 @@ test "large segments" {
     };
 
     const tests = [_]tst{
-        tst{ .input = input{ .file = "../assets/x12.base.loop-1.txt", .default_sep = true }, .expected = result{ .lines = 2 } },
+        tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.txt", .default_sep = true }, .expected = result{ .lines = 0 } },
+        tst{ .input = input{ .file = "../assets/x12.base.loop-1.txt", .default_sep = true }, .expected = result{ .lines = 1 } },
         tst{ .input = input{ .file = "../assets/x12.base.loop.txt", .default_sep = true }, .expected = result{ .lines = 24 } },
         tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.empty.line.txt", .default_sep = true }, .expected = result{ .lines = 0 } },
         tst{ .input = input{ .file = "../assets/x12.base.no.line.breaks.odd.char.txt", .default_sep = true }, .expected = result{ .lines = 0 } },
@@ -271,7 +272,7 @@ test "large segments" {
         if (t.input.default_sep) {
             ele_sep = default_element_sep;
         }
-        const content = try lib.read_file(t.input.file, test_allocator);
+        const content = try lib.readfile(t.input.file, test_allocator);
         defer test_allocator.free(content);
         var options = LexerOptions.init(default_segment_sep, ele_sep);
         var lexer = Lexer.init(content, options);
