@@ -7,13 +7,13 @@ const Segment = seg.Segment;
 
 const Token = tok.Token;
 
-pub const transaction_set = struct {
+pub const TransactionSet = struct {
     header: Segment,
     trailer: Segment,
     segments: std.ArrayList(Segment),
 
-    pub fn init() transaction_set {
-        return transaction_set{
+    pub fn init() TransactionSet {
+        return TransactionSet{
             .header = Segment.init(),
             .trailer = Segment.init(),
             .segments = std.ArrayList(Segment).init(),
@@ -21,30 +21,30 @@ pub const transaction_set = struct {
     }
 };
 
-pub const functional_grp = struct {
+pub const FunctionalGroup = struct {
     header: Segment,
     trailer: Segment,
-    transactions: std.ArrayList(transaction_set),
+    transactions: std.ArrayList(TransactionSet),
 
-    pub fn init() functional_grp {
-        return functional_grp{
+    pub fn init() FunctionalGroup {
+        return FunctionalGroup{
             .header = Segment.init(),
             .trailer = Segment.init(),
-            .transactions = std.ArrayList(transaction_set).init(),
+            .transactions = std.ArrayList(TransactionSet).init(),
         };
     }
 };
 
-pub const interchange_ctrl = struct {
+pub const InterchangeCtrl = struct {
     header: Segment,
     trailer: Segment,
-    fun_grps: std.ArrayList(functional_grp),
+    fun_grps: std.ArrayList(FunctionalGroup),
 
-    pub fn init() interchange_ctrl {
-        return interchange_ctrl{
+    pub fn init() InterchangeCtrl {
+        return InterchangeCtrl{
             .header = Segment.init(),
             .trailer = Segment.init(),
-            .fun_grps = std.ArrayList(functional_grp).init(),
+            .fun_grps = std.ArrayList(FunctionalGroup).init(),
         };
     }
 };
