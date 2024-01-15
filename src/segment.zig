@@ -1,51 +1,37 @@
 const std = @import("std");
 const testing = std.testing;
 
-const Segment = struct {
+pub const Segment = struct {
     val: SegmentType, // segment type
-    position: []const u8, // position in the document
-    required: bool, // if this segment is required
+    name: []const u8, // name of the segment
     description: []const u8, // description of the segment
-    max: u8, // max use allowed
 
-    pub fn init(val: SegmentType, position: []const u8, required: bool, description: []const u8, max: u8) Segment {
+    pub fn init(val: SegmentType, name: []const u8, description: []const u8) Segment {
         return Segment{
             .val = val,
-            .position = position,
-            .required = required,
+            .name = name,
             .description = description,
-            .max = max,
         };
     }
 
     pub fn print(self: Segment) void {
         std.debug.print("\nSegment: value={},", .{self.val});
-        std.debug.print("position={s}, ", .{self.position});
-        std.debug.print("required={}, ", .{self.required});
-        std.debug.print("description={s},", .{self.description});
-        std.debug.print("max={}\n", .{self.max});
+        std.debug.print("name={s}, ", .{self.name});
+        std.debug.print("description={s}\n", .{self.description});
     }
 };
 
-pub const SegmentType = enum { ST, BHT, HL, TRN, NM1, REF, N2, N3, N4, PER, PRV, DMG, INS, HI, DTP, MPI, EQ, AMT, VEH, PDR, PDP, III, TOO, SE };
+pub const SegmentType = enum {
+    IEA,
+    ISA,
+};
 
-test "segment1" {
-    const s = Segment.init(SegmentType.ST, "0100", true, "Transaction Set Header", 1);
-    try testing.expect(s.val == SegmentType.ST);
-    try testing.expect(std.mem.eql(u8, s.position, "0100") == true);
-    try testing.expect(s.required == true);
+pub const Segments = struct {
+    pub fn interchangeControlHeader() Segment {
+        return Segment{ .val = SegmentType.IEA, .name = "Interchange Control Trailer", .description = "To define the end of an interchange of zero or more functional groups and interchange-related control segments" };
+    }
 
-    s.print();
-}
-
-test "segment2" {
-    const s = Segment.init(SegmentType.ST, "0200", true, "Transaction Set Header", 1);
-    try testing.expect(std.mem.eql(u8, s.position, "0200") == true);
-
-    s.print();
-}
-
-test "segment3" {
-    const s = Segment.init(SegmentType.ST, "0300", true, "Transaction Set Header", 1);
-    s.print();
-}
+    pub fn interchangeControlTrailer() Segment {
+        return Segment{ .val = SegmentType.ISA, .name = "Interchange Control Header", .description = "To start and identify an interchange of zero or more functional groups and interchange-related control segments" };
+    }
+};

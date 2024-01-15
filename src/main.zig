@@ -14,27 +14,11 @@ const Token = lex.Token;
 const Parser = parser.Parser;
 
 pub fn main() !void {
-    // use flags
-    const use_default = true;
-    const use_file = false;
+    const ele_sep: u8 = '_';
+    const seg_sep: u8 = '^';
 
-    const s1 = "GS*SH*4405197800*999999999*20111206*1045*00*X*004060";
+    const s = "GS*SH*4405197800*999999999*20111206*1045*00*X*004060";
 
-    const file = "../assets/x12.base.one.txt";
-    const s2 = try lib.readfile(file, allocator);
-
-    var ele_sep: u8 = '_';
-    var seg_sep: u8 = '^';
-    if (use_default) {
-        ele_sep = lex.default_element_sep;
-        seg_sep = lex.default_segment_sep;
-    }
-
-    if (use_file) {
-        const p = Parser.init(s2, ele_sep, seg_sep);
-        p.parse();
-    } else {
-        const p = Parser.init(s1, ele_sep, seg_sep);
-        p.parse();
-    }
+    const p = Parser.init(s, ele_sep, seg_sep);
+    _ = p.parse();
 }

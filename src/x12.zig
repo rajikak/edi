@@ -4,6 +4,7 @@ const tok = @import("lexer.zig");
 
 const SegmentType = seg.SegmentType;
 const Segment = seg.Segment;
+const Segments = seg.Segments;
 
 const Token = tok.Token;
 
@@ -49,28 +50,32 @@ pub const InterchangeCtrl = struct {
     }
 };
 
-pub const x12 = struct {
+pub const X12Document = struct {
     // keep track by functional group index => functional group segments
-    buffer: std.AutotArratHashMap,
+    buffer: std.AutoArrayHashMap(SegmentType, Segment),
     ctrl_header: Segment,
     ctrl_trailer: Segment,
 
-    pub fn init(tokens: std.ArrayList(Token)) x12 {
-        _ = tokens;
-        return x12{ .buffer = std.AutoArrayHashMap(usize, std.ArraList).init() };
+    pub fn init() X12Document {
+        const alloc = std.heap.page_allocator;
+        return X12Document{
+            .buffer = std.AutoArrayHashMap(SegmentType, Segment).init(alloc),
+            .ctrl_header = Segments.interchangeControlHeader(),
+            .ctrl_trailer = Segments.interchangeControlTrailer(),
+        };
     }
 
     // functional group at
-    pub fn fg_at(self: x12, index: usize) *std.ArrayList {
+    pub fn fg_at(self: X12Document, index: usize) std.ArrayList {
         _ = self;
         _ = index;
     }
 
-    pub fn header(self: x12) Segment {
+    pub fn header(self: X12Document) Segment {
         return self.ctrl_header;
     }
 
-    pub fn trailer(self: x12) Segment {
+    pub fn trailer(self: X12Document) Segment {
         return self.ctrl_trailer;
     }
 };
