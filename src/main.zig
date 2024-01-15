@@ -20,5 +20,6 @@ pub fn main() !void {
     const s = "GS*SH*4405197800*999999999*20111206*1045*00*X*004060";
 
     const p = Parser.init(s, ele_sep, seg_sep);
-    _ = p.parse();
+    const x12 = p.parse();
+    x12.print();
 }

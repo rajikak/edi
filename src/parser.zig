@@ -5,10 +5,11 @@ const seg = @import("segment.zig");
 const lib = @import("lib.zig");
 const x12 = @import("x12.zig");
 
-const SegmentType = seg.SegmentType;
-const Segment = seg.Segment;
 const LexerOptions = lex.LexerOptions;
 const Lexer = lex.Lexer;
+const SegmentType = seg.SegmentType;
+const InterchangeControlTrailer = seg.InterchangeControlTrailer;
+const InterchangeControlHeader = seg.InterchangeControlHeader;
 
 const Token = lex.Token;
 const X12Document = x12.X12Document;
