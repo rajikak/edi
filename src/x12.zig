@@ -11,15 +11,15 @@ const Token = tok.Token;
 pub const X12Document = struct {
     // keep track by functional group index => functional group segments
     //buffer: std.AutoArrayHashMap(SegmentType, Segment),
-    header: InterchangeControlHeader,
-    trailer: InterchangeControlTrailer,
+    ctrl_header: InterchangeControlHeader,
+    ctrl_trailer: InterchangeControlTrailer,
 
     pub fn init() X12Document {
         //const alloc = std.heap.page_allocator;
         return X12Document{
             //.buffer = std.AutoArrayHashMap(SegmentType, Segment).init(alloc),
-            .header = InterchangeControlHeader.init(),
-            .trailer = InterchangeControlTrailer.init(),
+            .ctrl_header = InterchangeControlHeader.init(),
+            .ctrl_trailer = InterchangeControlTrailer.init(),
         };
     }
 
@@ -30,15 +30,10 @@ pub const X12Document = struct {
     }
 
     pub fn header(self: X12Document) InterchangeControlHeader {
-        return self.header;
+        return self.ctrl_header;
     }
 
     pub fn trailer(self: X12Document) InterchangeControlTrailer {
-        return self.trailer;
-    }
-
-    pub fn print(self: X12Document) void {
-        _ = self;
-        std.debug.print("x12 document\n", .{});
+        return self.ctrl_trailer;
     }
 };

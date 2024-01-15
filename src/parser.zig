@@ -27,7 +27,6 @@ pub const Parser = struct {
     pub fn parse(self: Parser) X12Document {
         var lexer = Lexer.init(self.s, self.options);
         lexer.tokens();
-        lexer.pbuffer();
 
         var doc = X12Document.init();
 
@@ -35,4 +34,12 @@ pub const Parser = struct {
     }
 };
 
-// implement tests for using parser from a string and file and different types of seperators
+test "string" {
+    _ = "GS*SH*4405197800*999999999*20111206*1045*00*X*004060";
+    return error.SkipZigTest;
+}
+
+test "file" {
+    _ = "../assets/x12.base.loop.txt";
+    return error.SkipZigtest;
+}
