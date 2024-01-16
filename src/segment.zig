@@ -6,6 +6,14 @@ pub const SegmentType = enum {
     ISA,
     GS,
     GE,
+    ST,
+    SE,
+};
+
+pub const Segment = struct {
+    typ: SegmentType,
+    name: []const u8,
+    description: []const u8,
 };
 
 // not very scalable approach - seperate data from data strctures
@@ -61,5 +69,33 @@ pub const FunctionalGroupTrailer = struct {
     pub fn print(self: FunctionalGroupTrailer) void {
         _ = self;
         std.debug.print("type: GE, name: Functional Group Trailer\n", .{});
+    }
+};
+
+pub const TransactionSetHeader = struct {
+    typ: SegmentType,
+    name: []const u8,
+    description: []const u8,
+
+    pub fn init() TransactionSetHeader {
+        return TransactionSetHeader{
+            .typ = SegmentType.ST,
+            .name = "Transaction Set Header",
+            .description = "To indicate the start of a transaction set and to assign a control number",
+        };
+    }
+};
+
+pub const TransactionSetTrailer = struct {
+    typ: SegmentType,
+    name: []const u8,
+    description: []const u8,
+
+    pub fn init() TransactionSetTrailer {
+        return TransactionSetTrailer{
+            .typ = SegmentType.SE,
+            .name = "Transaction Set Trailer",
+            .description = "To indicate the end of the transaction set and provide the count of the transmitted segments (including the beginning (ST) and ending (SE) segments)",
+        };
     }
 };

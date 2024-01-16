@@ -2,24 +2,56 @@ const std = @import("std");
 const seg = @import("segment.zig");
 const tok = @import("lexer.zig");
 
+const Segment = seg.Segment;
 const SegmentType = seg.SegmentType;
 const InterchangeControlTrailer = seg.InterchangeControlTrailer;
 const InterchangeControlHeader = seg.InterchangeControlHeader;
+const FunctionalGroupHeader = seg.FunctionalGroupHeader;
+const FunctionalGroupTrailer = seg.FunctionalGroupTrailer;
+const TransactionSetHeader = seg.TransactionSetHeader;
+const TransactionSetTrailer = seg.TransactionSetTrailer;
 
 const Token = tok.Token;
 
+pub const TransactionSet = struct {
+    buffer: std.ArrayList(Segment),
+    head: TransactionSetHeader,
+    trail: TransactionSetTrailer,
+
+    pub fn init() TransactionSet {
+        return TransactionSet{
+            .buffer = std.ArrayList(TransactionSet).init(std.heap.page_allocator),
+            .head = TransactionSetHeader.init(),
+            .trail = TransactionSetTrailer.init(),
+        };
+    }
+};
+
+pub const FunctionalGroup = struct {
+    buffer: std.ArrayList(TransactionSet),
+    head: FunctionalGroupHeader,
+    trail: FunctionalGroupTrailer,
+
+    pub fn init() FunctionalGroup {
+        return FunctionalGroup{
+            .buffer = std.ArrayList(TransactionSet).init(std.heap.page_allocator),
+            .head = FunctionalGroupHeader.init(),
+            .trail = FunctionalGroupTrailer.init(),
+        };
+    }
+};
+
 pub const X12Document = struct {
-    // keep track by functional group index => functional group segments
-    //buffer: std.AutoArrayHashMap(SegmentType, Segment),
-    ctrl_header: InterchangeControlHeader,
-    ctrl_trailer: InterchangeControlTrailer,
+    // keep track by functional group in order
+    buffer: std.ArrayList(FunctionalGroup),
+    headerv: InterchangeControlHeader,
+    trailerv: InterchangeControlTrailer,
 
     pub fn init() X12Document {
-        //const alloc = std.heap.page_allocator;
         return X12Document{
-            //.buffer = std.AutoArrayHashMap(SegmentType, Segment).init(alloc),
-            .ctrl_header = InterchangeControlHeader.init(),
-            .ctrl_trailer = InterchangeControlTrailer.init(),
+            .buffer = std.ArrayList(FunctionalGroup).init(std.heap.page_allocator),
+            .headerv = InterchangeControlHeader.init(),
+            .trailerv = InterchangeControlTrailer.init(),
         };
     }
 
@@ -30,10 +62,10 @@ pub const X12Document = struct {
     }
 
     pub fn header(self: X12Document) InterchangeControlHeader {
-        return self.ctrl_header;
+        return self.headerv;
     }
 
     pub fn trailer(self: X12Document) InterchangeControlTrailer {
-        return self.ctrl_trailer;
+        return self.trailerv;
     }
 };
