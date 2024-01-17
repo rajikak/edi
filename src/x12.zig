@@ -46,7 +46,6 @@ pub const X12Document = struct {
     buffer: std.ArrayList(FunctionalGroup),
     head: InterchangeControlHeader,
     trail: InterchangeControlTrailer,
-    segments: std.ArrayList(Segment),
 
     pub fn init() X12Document {
         return X12Document{
