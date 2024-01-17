@@ -44,14 +44,15 @@ pub const FunctionalGroup = struct {
 pub const X12Document = struct {
     // keep track by functional group in order
     buffer: std.ArrayList(FunctionalGroup),
-    headerv: InterchangeControlHeader,
-    trailerv: InterchangeControlTrailer,
+    head: InterchangeControlHeader,
+    trail: InterchangeControlTrailer,
+    segments: std.ArrayList(Segment),
 
     pub fn init() X12Document {
         return X12Document{
             .buffer = std.ArrayList(FunctionalGroup).init(std.heap.page_allocator),
-            .headerv = InterchangeControlHeader.init(),
-            .trailerv = InterchangeControlTrailer.init(),
+            .head = InterchangeControlHeader.init(),
+            .trail = InterchangeControlTrailer.init(),
         };
     }
 
@@ -62,10 +63,10 @@ pub const X12Document = struct {
     }
 
     pub fn header(self: X12Document) InterchangeControlHeader {
-        return self.headerv;
+        return self.head;
     }
 
     pub fn trailer(self: X12Document) InterchangeControlTrailer {
-        return self.trailerv;
+        return self.trail;
     }
 };

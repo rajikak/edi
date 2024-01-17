@@ -109,6 +109,11 @@ pub const Lexer = struct {
         return self.buffer.items.len;
     }
 
+    // provide access to the token buffer
+    pub fn tbuffer(self: Lexer) std.ArrayList(Token) {
+        return self.buffer;
+    }
+
     fn peek(self: Lexer) u8 {
         if (self.pos + 1 < self.input.len) {
             return self.input[self.pos + 1];
@@ -194,7 +199,7 @@ pub const Lexer = struct {
     }
 };
 
-test "segments" {
+test "lexer.segments" {
     const result = struct {
         len: u8,
     };
@@ -239,7 +244,7 @@ test "segments" {
     }
 }
 
-test "large segments" {
+test "lexer.large.segments" {
     const input = struct {
         file: []const u8,
         default_sep: bool,

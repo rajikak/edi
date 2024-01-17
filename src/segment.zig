@@ -11,19 +11,19 @@ pub const SegmentType = enum {
 };
 
 pub const Segment = struct {
-    typ: SegmentType,
+    ty: SegmentType,
     name: []const u8,
     description: []const u8,
 };
 
 // not very scalable approach - seperate data from data strctures
 pub const InterchangeControlTrailer = struct {
-    typ: SegmentType,
+    ty: SegmentType,
     name: []const u8,
     description: []const u8,
 
     pub fn init() InterchangeControlTrailer {
-        return InterchangeControlTrailer{ .typ = SegmentType.IEA, .name = "Interchange Control Trailer", .description = "To define the end of an interchange of zero or more functional groups and interchange-related control segments" };
+        return InterchangeControlTrailer{ .ty = SegmentType.IEA, .name = "Interchange Control Trailer", .description = "To define the end of an interchange of zero or more functional groups and interchange-related control segments" };
     }
 
     pub fn print(self: InterchangeControlTrailer) void {
@@ -33,27 +33,31 @@ pub const InterchangeControlTrailer = struct {
 };
 
 pub const InterchangeControlHeader = struct {
-    typ: SegmentType,
+    ty: SegmentType,
     name: []const u8,
     description: []const u8,
 
     pub fn init() InterchangeControlHeader {
-        return InterchangeControlHeader{ .typ = SegmentType.ISA, .name = "Interchange Control Header", .description = "To define the end of an interchange of zero or more functional groups and interchange related control segments" };
+        return InterchangeControlHeader{ .ty = SegmentType.ISA, .name = "Interchange Control Header", .description = "To define the end of an interchange of zero or more functional groups and interchange related control segments" };
     }
 
     pub fn print(self: InterchangeControlHeader) void {
         _ = self;
         std.debug.print("type: ISA, name: Interchange Control Header\n", .{});
     }
+
+    pub fn typ(self: InterchangeControlHeader) SegmentType {
+        return self.ty;
+    }
 };
 
 pub const FunctionalGroupHeader = struct {
-    typ: SegmentType,
+    ty: SegmentType,
     name: []const u8,
     description: []const u8,
 
     pub fn init() FunctionalGroupHeader {
-        return FunctionalGroupHeader{ .typ = SegmentType.GS, .name = "Functional Group Header", .description = "To indicate the beginning of a functional group and to provide control information" };
+        return FunctionalGroupHeader{ .ty = SegmentType.GS, .name = "Functional Group Header", .description = "To indicate the beginning of a functional group and to provide control information" };
     }
 };
 
@@ -73,13 +77,13 @@ pub const FunctionalGroupTrailer = struct {
 };
 
 pub const TransactionSetHeader = struct {
-    typ: SegmentType,
+    ty: SegmentType,
     name: []const u8,
     description: []const u8,
 
     pub fn init() TransactionSetHeader {
         return TransactionSetHeader{
-            .typ = SegmentType.ST,
+            .ty = SegmentType.ST,
             .name = "Transaction Set Header",
             .description = "To indicate the start of a transaction set and to assign a control number",
         };
@@ -87,13 +91,13 @@ pub const TransactionSetHeader = struct {
 };
 
 pub const TransactionSetTrailer = struct {
-    typ: SegmentType,
+    ty: SegmentType,
     name: []const u8,
     description: []const u8,
 
     pub fn init() TransactionSetTrailer {
         return TransactionSetTrailer{
-            .typ = SegmentType.SE,
+            .ty = SegmentType.SE,
             .name = "Transaction Set Trailer",
             .description = "To indicate the end of the transaction set and provide the count of the transmitted segments (including the beginning (ST) and ending (SE) segments)",
         };

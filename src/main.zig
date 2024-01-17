@@ -23,7 +23,7 @@ pub fn main() !void {
 
     const Parser = parser.Parser;
     const p = Parser.init(s, ele_sep, seg_sep);
-    const r: X12Document = p.parse();
+    const r = p.parse();
     r.header().print();
     r.trailer().print();
 }
