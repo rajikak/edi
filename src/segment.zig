@@ -10,64 +10,116 @@ pub const SegmentType = enum {
     SE,
 };
 
-pub const Segment = struct {
-    ty: SegmentType,
-    name: []const u8,
-    description: []const u8,
-};
+pub const InterchangeControlHeader = struct {
+    ty: SegmentType = SegmentType.ISA,
 
-// not very scalable approach - seperate data from data strctures
-pub const InterchangeControlTrailer = struct {
-    ty: SegmentType,
-    name: []const u8,
-    description: []const u8,
+    // ISA-01
+    auth_info_qualifier: []const u8,
 
-    pub fn init() InterchangeControlTrailer {
-        return InterchangeControlTrailer{ .ty = SegmentType.IEA, .name = "Interchange Control Trailer", .description = "To define the end of an interchange of zero or more functional groups and interchange-related control segments" };
+    // ISA-02
+    auth_info: []const u8,
+
+    // ISA-03
+    sec_info_qualifier: []const u8,
+
+    // ISA-04
+    sec_info: []const u8,
+
+    // ISA-05
+    interchange_id_qualifier: []const u8,
+
+    // ISA-06
+    interchange_sender_id: []const u8,
+
+    // ISA-07
+    interchange_id_qualifier2: []const u8,
+
+    // ISA-08
+    interchange_receiver_id: []const u8,
+
+    // ISA-09
+    interchange_date: []const u8,
+
+    // ISA-10
+    interchange_time: []const u8,
+
+    // ISA-11
+    interchange_ctrl_std_id: []const u8,
+
+    // ISA-12
+    interchange_ctrl_version: []const u8,
+
+    // ISA-13
+    interchange_ctrl_num: []const u8,
+
+    // ISA-14
+    ack_requested: bool,
+
+    // ISA-15
+    usage_indicator: []const u8,
+
+    // ISA-16
+    ele_separator: []const u8,
+
+    pub fn init(auth_info_qualifier: []const u8, auth_info: []const u8, sec_info_qualifier: []const u8, sec_info: []const u8, interchange_id_qualifier: []const u8, interchange_sender_id: []const u8, interchange_id_qualifier2: []const u8, interchange_receiver_id: []const u8, interchange_date: []const u8, interchange_time: []const u8, interchange_ctrl_std_id: []const u8, interchange_ctrl_version: []const u8, interchange_ctrl_num: []const u8, ack_reqeusted: bool, usage_indicator: []const u8, ele_separator: []const u8) InterchangeControlHeader {
+        return InterchangeControlTrailer{
+            .auth_info_qualifier = auth_info_qualifier,
+            .auth_info = auth_info,
+            .sec_info_qualifier = sec_info_qualifier,
+            .sec_info = sec_info,
+            .interchange_id_qualifier = interchange_id_qualifier,
+            .interchange_sender_id = interchange_sender_id,
+            .interchange_id_qualifier2 = interchange_id_qualifier2,
+            .interchange_receiver_id = interchange_receiver_id,
+            .interchange_date = interchange_date,
+            .interchange_time = interchange_time,
+            .interchange_ctrl_std_id = interchange_ctrl_std_id,
+            .interchange_ctrl_version = interchange_ctrl_version,
+            .interchange_ctrl_num = interchange_ctrl_num,
+            .ack_reqeusted = ack_reqeusted,
+            .usage_indicator = usage_indicator,
+            .ele_separator = ele_separator,
+        };
     }
 
-    pub fn print(self: InterchangeControlTrailer) void {
+    pub fn print(self: InterchangeControlHeader) void {
         _ = self;
         std.debug.print("type: IEA, name: Interchange Control Trailer\n", .{});
     }
 };
 
-pub const InterchangeControlHeader = struct {
-    ty: SegmentType,
-    name: []const u8,
-    description: []const u8,
+pub const InterchangeControlTrailer = struct {
+    ty: SegmentType = SegmentType.IEA,
 
-    pub fn init() InterchangeControlHeader {
-        return InterchangeControlHeader{ .ty = SegmentType.ISA, .name = "Interchange Control Header", .description = "To define the end of an interchange of zero or more functional groups and interchange related control segments" };
+    // IEA-01
+    num_of_functional_grps: usize,
+
+    // IEA-02
+    interchange_ctrl_num: []const u8,
+
+    pub fn init(num_of_functional_grps: usize, interchange_ctrl_num: []const u8) InterchangeControlTrailer {
+        return InterchangeControlTrailer{ .num_of_functional_grps = num_of_functional_grps, .interchange_ctlr_num = interchange_ctrl_num };
     }
 
-    pub fn print(self: InterchangeControlHeader) void {
+    pub fn print(self: InterchangeControlTrailer) void {
         _ = self;
         std.debug.print("type: ISA, name: Interchange Control Header\n", .{});
-    }
-
-    pub fn typ(self: InterchangeControlHeader) SegmentType {
-        return self.ty;
     }
 };
 
 pub const FunctionalGroupHeader = struct {
-    ty: SegmentType,
-    name: []const u8,
-    description: []const u8,
+    ty: SegmentType = SegmentType.GS,
 
     pub fn init() FunctionalGroupHeader {
-        return FunctionalGroupHeader{ .ty = SegmentType.GS, .name = "Functional Group Header", .description = "To indicate the beginning of a functional group and to provide control information" };
+        return FunctionalGroupHeader{};
     }
 };
 
 pub const FunctionalGroupTrailer = struct {
-    typ: SegmentType,
-    name: []const u8,
-    description: []const u8,
+    typ: SegmentType = SegmentType.SE,
 
     pub fn init() FunctionalGroupTrailer {
-        return FunctionalGroupTrailer{ .typ = SegmentType.GE, .name = "Functional Group Trailer", .description = "To indicate the end of a functional group and to provide control information" };
+        return FunctionalGroupTrailer{};
     }
 
     pub fn print(self: FunctionalGroupTrailer) void {
@@ -77,29 +129,17 @@ pub const FunctionalGroupTrailer = struct {
 };
 
 pub const TransactionSetHeader = struct {
-    ty: SegmentType,
-    name: []const u8,
-    description: []const u8,
+    ty: SegmentType = SegmentType.ST,
 
     pub fn init() TransactionSetHeader {
-        return TransactionSetHeader{
-            .ty = SegmentType.ST,
-            .name = "Transaction Set Header",
-            .description = "To indicate the start of a transaction set and to assign a control number",
-        };
+        return TransactionSetHeader{};
     }
 };
 
 pub const TransactionSetTrailer = struct {
-    ty: SegmentType,
-    name: []const u8,
-    description: []const u8,
+    ty: SegmentType = SegmentType.SE,
 
     pub fn init() TransactionSetTrailer {
-        return TransactionSetTrailer{
-            .ty = SegmentType.SE,
-            .name = "Transaction Set Trailer",
-            .description = "To indicate the end of the transaction set and provide the count of the transmitted segments (including the beginning (ST) and ending (SE) segments)",
-        };
+        return TransactionSetTrailer{};
     }
 };

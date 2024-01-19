@@ -21,37 +21,34 @@ const expect = testing.expect;
 // parse and produce an x12 document from an EDI stream
 pub const Parser = struct {
     s: []const u8,
-    ele_sep: u8,
-    seg_sep: u8,
+    ele_separator: u8,
+    seg_separator: u8,
 
-    pub fn init(s: []const u8, ele_sep: u8, seg_sep: u8) Parser {
-        return Parser{ .s = s, .ele_sep = ele_sep, .seg_sep = seg_sep };
+    pub fn init(s: []const u8, ele_separator: u8, seg_separator: u8) Parser {
+        return Parser{ .s = s, .ele_separator = ele_separator, .seg_separator = seg_separator };
     }
 
-    pub fn parse(self: Parser) X12Document {
-        var options = LexerOptions.init(self.seg_sep, self.ele_sep);
+    pub fn parse(self: Parser) void {
+        var options = LexerOptions.init(self.seg_separator, self.ele_separator);
         var lexer = Lexer.init(self.s, options);
         lexer.tokens();
 
         const buf = lexer.tbuffer();
 
-        var segbuf = std.ArrayList(Token).init(std.heap.page_allocator);
+        var segbuf = std.ArrayList([]const u8).init(std.heap.page_allocator);
+        defer segbuf.deinit();
+
+        var segs = std.ArrayList([][]const u8).init(std.heap.page_allocator);
+        defer segs.deinit();
 
         for (buf.items) |token| {
             if (token.typ == TokenType.eof or token.typ == TokenType.seg_sep or token.typ == TokenType.new_line) {
-                std.debug.print("\nsegment: ", .{});
-                for (segbuf.items) |token2| {
-                    std.debug.print("{s}", .{token2.val});
-                }
-                std.debug.print("\n", .{});
+                segs.append(segbuf.items) catch @panic("out of memory occured while saving the segment");
                 segbuf.clearAndFree();
             } else {
-                segbuf.append(token) catch @panic("out of memory occured while generating segment buffer");
+                segbuf.append(token.val) catch @panic("out of memory occured while generating segment");
             }
         }
-        var doc = X12Document.init();
-
-        return doc;
     }
 };
 
@@ -60,8 +57,7 @@ test "parser.string" {
 
     const p = Parser.init(s, '*', '~');
     const r = p.parse();
-
-    try expect(r.header().typ() == SegmentType.ISA);
+    _ = r;
 }
 
 test "parser.file" {

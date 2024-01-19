@@ -47,12 +47,8 @@ pub const X12Document = struct {
     head: InterchangeControlHeader,
     trail: InterchangeControlTrailer,
 
-    pub fn init() X12Document {
-        return X12Document{
-            .buffer = std.ArrayList(FunctionalGroup).init(std.heap.page_allocator),
-            .head = InterchangeControlHeader.init(),
-            .trail = InterchangeControlTrailer.init(),
-        };
+    pub fn init(head: InterchangeControlHeader, trail: InterchangeControlTrailer) X12Document {
+        return X12Document{ .head = head, .trail = trail };
     }
 
     // functional group at
