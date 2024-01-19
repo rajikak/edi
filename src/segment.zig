@@ -1,6 +1,31 @@
 const std = @import("std");
 const testing = std.testing;
 
+const lex = @import("lexer.zig");
+
+const Token = lex.Token;
+
+// represent an element in a segment
+pub const Element = struct {
+    id: u128,
+    ty: SegmentType,
+    val: []const u8,
+
+    pub fn fromToken(id: u128, t: Token) Element {
+        return Element{ .id = id, .ty = t.typ, .val = t.val };
+    }
+};
+
+// represent any segment
+pub const Segment = struct {
+    ty: SegmentType,
+    elements: []Element,
+
+    pub fn fromElements(elems: std.ArrayList(Element)) Segment {
+        return Segment{ .ty = elems[0].ty, .elements = elems.items };
+    }
+};
+
 pub const SegmentType = enum {
     IEA,
     ISA,

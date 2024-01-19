@@ -5,14 +5,17 @@ const seg = @import("segment.zig");
 const lib = @import("lib.zig");
 const x12 = @import("x12.zig");
 
+const Token = lex.Token;
+const TokenType = lex.TokenType;
 const LexerOptions = lex.LexerOptions;
 const Lexer = lex.Lexer;
+
+const Element = seg.Element;
+const Segment = seg.Segment;
 const SegmentType = seg.SegmentType;
 const InterchangeControlTrailer = seg.InterchangeControlTrailer;
 const InterchangeControlHeader = seg.InterchangeControlHeader;
 
-const Token = lex.Token;
-const TokenType = lex.TokenType;
 const X12Document = x12.X12Document;
 
 const testing = std.testing;
@@ -35,18 +38,20 @@ pub const Parser = struct {
 
         const buf = lexer.tbuffer();
 
-        var segbuf = std.ArrayList([]const u8).init(std.heap.page_allocator);
+        var segbuf = std.ArrayList(Segment).init(std.heap.page_allocator);
         defer segbuf.deinit();
 
-        var segs = std.ArrayList([][]const u8).init(std.heap.page_allocator);
-        defer segs.deinit();
+        var elebuf = std.ArrayList(Element).init(std.heap.page_allocator);
+        defer elebuf.deinit();
 
         for (buf.items) |token| {
-            if (token.typ == TokenType.eof or token.typ == TokenType.seg_sep or token.typ == TokenType.new_line) {
-                segs.append(segbuf.items) catch @panic("out of memory occured while saving the segment");
-                segbuf.clearAndFree();
+            if (token.typ == TokenType.ele_separator) {
+                continue;
+            } else if (token.typ == TokenType.eof or token.typ == TokenType.seg_separator or token.typ == TokenType.new_line) {
+                segbuf.append(Segment.fromElements(elebuf)) catch @panic("out of memory");
+                elebuf.clearAndFree();
             } else {
-                segbuf.append(token.val) catch @panic("out of memory occured while generating segment");
+                elebuf.append(Element.fromToken(token)) catch @panic("out of memory");
             }
         }
     }

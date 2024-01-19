@@ -1,10 +1,10 @@
 const std = @import("std");
 const lib = @import("lib.zig");
-const mem = std.mem;
-const allocator = std.heap.page_allocator;
 
+const mem = std.mem;
 const testing = std.testing;
 const expect = testing.expect;
+const allocator = std.heap.page_allocator;
 const test_allocator = std.testing.allocator;
 
 pub const eof = "-1";
@@ -19,8 +19,8 @@ pub const TokenType = enum {
     eof,
     identifier, // elemenet identifier
     val, // a value
-    seg_sep, // segment seperator
-    ele_sep, // element seperator
+    seg_separator, // segment seperator
+    ele_separator, // element seperator
     new_line, // new line
 
     fn asstr(self: TokenType) []const u8 {
@@ -68,11 +68,11 @@ pub const Token = struct {
 
 // configuration for the lexer
 pub const LexerOptions = struct {
-    seg_sep: u8,
-    ele_sep: u8,
+    seg_separator: u8,
+    ele_separator: u8,
 
-    pub fn init(seg_sep: u8, ele_sep: u8) LexerOptions {
-        return LexerOptions{ .seg_sep = seg_sep, .ele_sep = ele_sep };
+    pub fn init(seg_separator: u8, ele_separator: u8) LexerOptions {
+        return LexerOptions{ .seg_separator = seg_separator, .ele_separator = ele_separator };
     }
 };
 
@@ -146,9 +146,9 @@ pub const Lexer = struct {
     fn next(self: *Lexer) Token {
         var line: u8 = 0;
 
-        const ele_sep = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.ele_sep}) catch default_element_sep_as_str;
+        const ele_separator = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.ele_separator}) catch default_element_sep_as_str;
 
-        const seg_sep = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.seg_sep}) catch default_segment_sep_as_str;
+        const seg_separator = std.fmt.allocPrint(std.heap.page_allocator, "{c}", .{self.options.seg_separator}) catch default_segment_sep_as_str;
 
         while (true) : (self.pos += 1) {
             if (self.pos == self.input.len) {
@@ -161,17 +161,17 @@ pub const Lexer = struct {
                 self.pos += 1;
                 self.start = self.pos;
                 return Token.init(TokenType.new_line, self.pos, "\n", line);
-            } else if (char == self.options.seg_sep) {
+            } else if (char == self.options.seg_separator) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.seg_sep, self.pos, seg_sep, line);
-            } else if (char == self.options.ele_sep) {
+                return Token.init(TokenType.seg_separator, self.pos, seg_separator, line);
+            } else if (char == self.options.ele_separator) {
                 self.pos += 1;
                 self.start = self.pos;
-                return Token.init(TokenType.ele_sep, self.pos, ele_sep, line);
+                return Token.init(TokenType.ele_separator, self.pos, ele_separator, line);
             } else if (self.pos + 1 < self.input.len) {
                 const next_char: u8 = self.peek();
-                if (next_char == self.options.ele_sep or next_char == self.options.seg_sep) {
+                if (next_char == self.options.ele_separator or next_char == self.options.seg_separator) {
                     const tv: []const u8 = self.input[self.start .. self.pos + 1];
                     self.pos += 1;
                     self.start = self.pos;
