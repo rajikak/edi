@@ -10,6 +10,7 @@ const TokenType = lex.TokenType;
 const LexerOptions = lex.LexerOptions;
 const Lexer = lex.Lexer;
 
+const Spec = seg.Spec;
 const Element = seg.Element;
 const Segment = seg.Segment;
 const SegmentType = seg.SegmentType;
@@ -43,11 +44,13 @@ pub const Parser = struct {
         var elebuf = std.ArrayList(Element).init(std.heap.page_allocator);
         defer elebuf.deinit();
 
+        const spec = Spec.init();
+
         for (lexer.tbuffer().items) |token| {
             if (token.typ == TokenType.ele_separator) {
                 continue;
             } else if (token.typ == TokenType.eof or token.typ == TokenType.seg_separator or token.typ == TokenType.new_line) {
-                const s = Segment.fromElements(elebuf);
+                const s = Segment.fromElements(spec, elebuf);
                 segbuf.append(s) catch @panic("out of memory");
                 elebuf.clearAndFree();
             } else {
@@ -56,17 +59,16 @@ pub const Parser = struct {
         }
 
         for (segbuf.items) |s| {
-            std.debug.print("segment: ", .{});
             s.print();
-            std.debug.print("\n", .{});
         }
     }
 };
 
 test "parser.string" {
-    //const s = "GS*SH~12*34~XY*ZT~KLMBO";
+    const s = "GS*SH~12*34~XY*ZT~KLMBO";
     //const s = "GS*SH~1234*AB*CD";
-    const s = "GS*SH*4405197800*999999999*20111206~1045*00*\n004060";
+    //const s = "GS*SH*4405197800*999999999*20111206~1045*00*\n004060";
+    //const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO*ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>";
 
     const p = Parser.init(s, '*', '~');
     const r = p.parse();

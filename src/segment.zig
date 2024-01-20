@@ -1,5 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
+const mem = std.mem;
 
 const lex = @import("lexer.zig");
 
@@ -18,20 +19,22 @@ pub const Element = struct {
 
 // represent any segment
 pub const Segment = struct {
-    ty: SegmentType = SegmentType.ISA,
+    ty: SegmentType = SegmentType.NotDefined,
     elements: std.ArrayList(Element),
 
-    pub fn fromElements(elems: std.ArrayList(Element)) Segment {
+    pub fn fromElements(spec: Spec, elems: std.ArrayList(Element)) Segment {
         var elements = std.ArrayList(Element).init(Allocator);
 
         for (elems.items) |e| {
             elements.append(e) catch @panic("out of memory");
         }
 
-        return Segment{ .elements = elements };
+        const ty = spec.segmentType(elems.items[0].val);
+        return Segment{ .ty = ty, .elements = elements };
     }
 
     pub fn print(self: Segment) void {
+        std.debug.print("type: {}, ", .{self.ty});
         for (self.elements.items) |element| {
             std.debug.print("{s} ", .{element.val});
         }
@@ -41,15 +44,46 @@ pub const Segment = struct {
     pub fn deinit(self: Segment) void {
         defer self.elements.deinit();
     }
+
+    pub fn identifier(self: Segment) SegmentType {
+        return self.ty;
+    }
 };
 
 pub const SegmentType = enum {
+    NotDefined,
     IEA,
     ISA,
     GS,
     GE,
     ST,
     SE,
+};
+
+pub const Spec = struct {
+    segments: std.StringHashMap(SegmentType),
+
+    pub fn init() Spec {
+        var s = std.StringHashMap(SegmentType).init(Allocator);
+
+        s.put("IEA", SegmentType.IEA) catch @panic("out of memory");
+        s.put("ISA", SegmentType.ISA) catch @panic("out of memory");
+        s.put("GS", SegmentType.GS) catch @panic("out of memory");
+        s.put("GE", SegmentType.GE) catch @panic("out of memory");
+        s.put("ST", SegmentType.ST) catch @panic("out of memory");
+        s.put("SE", SegmentType.SE) catch @panic("out of memory");
+
+        return Spec{ .segments = s };
+    }
+
+    pub fn segmentType(self: Spec, s: []const u8) SegmentType {
+        const v = self.segments.get(s);
+
+        if (v) |segment| {
+            return segment;
+        }
+        return SegmentType.NotDefined;
+    }
 };
 
 pub const InterchangeControlHeader = struct {
