@@ -4,25 +4,42 @@ const testing = std.testing;
 const lex = @import("lexer.zig");
 
 const Token = lex.Token;
+const Allocator = std.heap.page_allocator;
 
 // represent an element in a segment
 pub const Element = struct {
-    id: u128,
-    ty: SegmentType,
+    id: []const u8 = "",
     val: []const u8,
 
-    pub fn fromToken(id: u128, t: Token) Element {
-        return Element{ .id = id, .ty = t.typ, .val = t.val };
+    pub fn fromToken(t: Token) Element {
+        return Element{ .val = t.val };
     }
 };
 
 // represent any segment
 pub const Segment = struct {
-    ty: SegmentType,
-    elements: []Element,
+    ty: SegmentType = SegmentType.ISA,
+    elements: std.ArrayList(Element),
 
     pub fn fromElements(elems: std.ArrayList(Element)) Segment {
-        return Segment{ .ty = elems[0].ty, .elements = elems.items };
+        var elements = std.ArrayList(Element).init(Allocator);
+
+        for (elems.items) |e| {
+            elements.append(e) catch @panic("out of memory");
+        }
+
+        return Segment{ .elements = elements };
+    }
+
+    pub fn print(self: Segment) void {
+        for (self.elements.items) |element| {
+            std.debug.print("{s} ", .{element.val});
+        }
+        std.debug.print("\n", .{});
+    }
+
+    pub fn deinit(self: Segment) void {
+        defer self.elements.deinit();
     }
 };
 

@@ -32,9 +32,9 @@ pub const TokenType = enum {
             return "identifier";
         } else if (self == TokenType.val) {
             return "val";
-        } else if (self == TokenType.seg_sep) {
+        } else if (self == TokenType.seg_separator) {
             return "segment seperator";
-        } else if (self == TokenType.ele_sep) {
+        } else if (self == TokenType.ele_separator) {
             return "element seperator";
         } else if (self == TokenType.new_line) {
             return "new line";
