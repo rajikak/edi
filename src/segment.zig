@@ -48,6 +48,10 @@ pub const Segment = struct {
     pub fn identifier(self: Segment) SegmentType {
         return self.ty;
     }
+
+    pub fn getElement(self: Segment, index: usize) Element {
+        return self.elements.items[index];
+    }
 };
 
 pub const SegmentType = enum {

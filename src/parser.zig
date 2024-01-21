@@ -59,13 +59,14 @@ pub const Parser = struct {
         }
 
         for (segbuf.items) |s| {
-            s.print();
+            std.debug.print("elem at 0: {s}\n", .{s.getElement(0).val});
+            std.debug.print("elem at 1: {s}\n", .{s.getElement(1).val});
         }
     }
 };
 
 test "parser.string" {
-    const s = "GS*SH~12*34~XY*ZT~KLMBO";
+    const s = "GS*SH~12*34~XY*ZT~KLMBO*KW";
     //const s = "GS*SH~1234*AB*CD";
     //const s = "GS*SH*4405197800*999999999*20111206~1045*00*\n004060";
     //const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO*ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>";

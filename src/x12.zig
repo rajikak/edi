@@ -51,12 +51,6 @@ pub const X12Document = struct {
         return X12Document{ .head = head, .trail = trail };
     }
 
-    // functional group at
-    pub fn fg_at(self: X12Document, index: usize) std.ArrayList {
-        _ = self;
-        _ = index;
-    }
-
     pub fn header(self: X12Document) InterchangeControlHeader {
         return self.head;
     }
