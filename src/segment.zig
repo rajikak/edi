@@ -50,6 +50,9 @@ pub const Segment = struct {
     }
 
     pub fn getElement(self: Segment, index: usize) Element {
+        if (index >= self.elements.items.len) {
+            return Element{ .val = "" };
+        }
         return self.elements.items[index];
     }
 };
