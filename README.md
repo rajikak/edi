@@ -1,23 +1,29 @@
 EDI parser and library using Zig lang.
 
-## Parser
-Generate parsing errors as per X12 document strctures and transaction set validation rules.
+## Usage
+### Lexer 
 ```
-syntax error: invalid element defintion `VX` at line 2, column 3 in file benefits.edi
+test "lexer.segments" {
+
+	const s = "DXS*9251230013*DX*004010UCS*1*9254850000";
+    var options = LexerOptions.init('~', '*');
+    var lexer = Lexer.init(s, options);
+    lexer.tokens();
+        
+	try expect(11 == lexer.size() - 1);
+    try expect(std.mem.eql(u8, s, lexer.value()) == true);
+}
 ```
 
+### Parser
 ```
-syntax error: missing element definition for `LIN` segment at line 3, column 3 in file benefits.edi
+test "parser.string" {
+    const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO~ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>~IEA*2*000000049";
+    const p = Parser.init(s, '*', '~');
+    const r = p.parse();
+    _ = r;
+}
 ```
-  
-## Library 
-Generate an X12 document from Zig data strctures.
-
-### API Examples 
-```
-Document Zig library API
-```
-
 
 ## Supported Transaction Sets
 

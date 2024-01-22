@@ -71,47 +71,30 @@ pub const Parser = struct {
 
             if (s.ty == SegmentType.ISA) {
                 const cn = std.fmt.parseInt(usize, s.getElement(2).val, 10) catch @panic("parsing error");
-                const interchange_ctrl_header = InterchangeControlHeader.init(s.getElement(1).val, s.getElement(2).val, s.getElement(3).val, s.getElement(4).val, s.getElement(5).val, s.getElement(6).val, s.getElement(7).val, s.getElement(8).val, s.getElement(9).val, s.getElement(10).val, s.getElement(11).val, s.getElement(12).val, cn, s.getElement(14).val, s.getElement(16).val, s.getElement(15).val);
+                var interchange_ctrl_header = InterchangeControlHeader.init(s.getElement(1).val, s.getElement(2).val, s.getElement(3).val, s.getElement(4).val, s.getElement(5).val, s.getElement(6).val, s.getElement(7).val, s.getElement(8).val, s.getElement(9).val, s.getElement(10).val, s.getElement(11).val, s.getElement(12).val, cn, s.getElement(14).val, s.getElement(16).val, s.getElement(15).val);
                 isabuf.append(interchange_ctrl_header) catch @panic("out of memory");
             } else if (s.ty == SegmentType.IEA) {
                 const n = std.fmt.parseInt(usize, s.getElement(1).val, 10) catch @panic("parsing error");
                 const cn = std.fmt.parseInt(usize, s.getElement(2).val, 10) catch @panic("parsing error");
 
-                const interchange_ctrl_trailer = InterchangeControlTrailer.init(n, cn);
+                var interchange_ctrl_trailer = InterchangeControlTrailer.init(n, cn);
                 isebuf.append(interchange_ctrl_trailer) catch @panic("out of memory");
             }
         }
 
         var fg = FunctionalGroup.init();
-        fg.addTransactionSet(&ts);
+        fg.addTransactionSet(ts);
 
         var doc = X12Document.init(isabuf.pop(), isebuf.pop());
-        doc.addFunctionalGroup(&fg);
+        doc.addFunctionalGroup(fg);
 
         return doc;
     }
 };
 
 test "parser.string" {
-    const s = "GS*SH~12*34~XY*ZT~KLMBO*KW";
-    //const s = "GS*SH~1234*AB*CD";
-    //const s = "GS*SH*4405197800*999999999*20111206~1045*00*\n004060";
-    //const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO*ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>";
-
+    const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO~ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>~IEA*2*000000049";
     const p = Parser.init(s, '*', '~');
     const r = p.parse();
     _ = r;
-
-    //const result = struct {
-
-    //};
-
-    //const tst = struct {
-    //    input: []const u8,
-    //    expected: result,
-    //};
-
-    //const tests = [_]tst {
-    //
-    //};
 }

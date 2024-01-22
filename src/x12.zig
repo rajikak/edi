@@ -46,7 +46,7 @@ pub const FunctionalGroup = struct {
         };
     }
 
-    pub fn addTransactionSet(self: FunctionalGroup, ts: *TransactionSet) void {
+    pub fn addTransactionSet(self: *FunctionalGroup, ts: TransactionSet) void {
         self.buffer.append(ts) catch @panic("out of memory");
     }
 };
@@ -62,15 +62,15 @@ pub const X12Document = struct {
         return X12Document{ .head = head, .trail = trail, .buffer = buf };
     }
 
-    pub fn header(self: X12Document) InterchangeControlHeader {
+    pub fn header(self: *X12Document) InterchangeControlHeader {
         return self.head;
     }
 
-    pub fn trailer(self: X12Document) InterchangeControlTrailer {
+    pub fn trailer(self: *X12Document) InterchangeControlTrailer {
         return self.trail;
     }
 
-    pub fn addFunctionalGroup(self: X12Document, fg: *FunctionalGroup) void {
+    pub fn addFunctionalGroup(self: *X12Document, fg: FunctionalGroup) void {
         self.buffer.append(fg) catch @panic("out of memory");
     }
 };

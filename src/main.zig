@@ -16,10 +16,10 @@ const Token = lex.Token;
 const X12Document = x12.X12Document;
 
 pub fn main() !void {
-    const ele_separator: u8 = '_';
-    const seg_separator: u8 = '^';
+    const ele_separator: u8 = '*';
+    const seg_separator: u8 = '~';
 
-    const s = "GS*SH*4405197800*999999999*20111206*1045*00*X*004060";
+    const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO~ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>~IEA*2*000000049";
 
     const Parser = parser.Parser;
     const p = Parser.init(s, ele_separator, seg_separator);
