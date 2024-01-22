@@ -9,7 +9,7 @@ test "lexer.segments" {
     var options = LexerOptions.init('~', '*');
     var lexer = Lexer.init(s, options);
     lexer.tokens();
-        
+    
 	try expect(11 == lexer.size() - 1);
     try expect(std.mem.eql(u8, s, lexer.value()) == true);
 }
