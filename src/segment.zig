@@ -97,55 +97,71 @@ pub const InterchangeControlHeader = struct {
     ty: SegmentType = SegmentType.ISA,
 
     // ISA-01
-    auth_info_qualifier: []const u8,
+    auth_info_qualifier: []const u8 = "",
 
     // ISA-02
-    auth_info: []const u8,
+    auth_info: []const u8 = "",
 
     // ISA-03
-    sec_info_qualifier: []const u8,
+    sec_info_qualifier: []const u8 = "",
 
     // ISA-04
-    sec_info: []const u8,
+    sec_info: []const u8 = "",
 
     // ISA-05
-    interchange_id_qualifier: []const u8,
+    interchange_id_qualifier: []const u8 = "",
 
     // ISA-06
-    interchange_sender_id: []const u8,
+    interchange_sender_id: []const u8 = "",
 
     // ISA-07
-    interchange_id_qualifier2: []const u8,
+    interchange_id_qualifier2: []const u8 = "",
 
     // ISA-08
-    interchange_receiver_id: []const u8,
+    interchange_receiver_id: []const u8 = "",
 
     // ISA-09
-    interchange_date: []const u8,
+    interchange_date: []const u8 = "",
 
     // ISA-10
-    interchange_time: []const u8,
+    interchange_time: []const u8 = "",
 
     // ISA-11
-    interchange_ctrl_std_id: []const u8,
+    interchange_ctrl_std_id: []const u8 = "",
 
     // ISA-12
-    interchange_ctrl_version: []const u8,
+    interchange_ctrl_version: []const u8 = "",
 
     // ISA-13
-    interchange_ctrl_num: []const u8,
+    interchange_ctrl_num: usize = 0,
 
     // ISA-14
-    ack_requested: bool,
+    ack_requested: []const u8 = "",
 
     // ISA-15
-    usage_indicator: []const u8,
+    usage_indicator: []const u8 = "",
 
     // ISA-16
-    ele_separator: []const u8,
+    ele_separator: []const u8 = "",
 
-    pub fn init(auth_info_qualifier: []const u8, auth_info: []const u8, sec_info_qualifier: []const u8, sec_info: []const u8, interchange_id_qualifier: []const u8, interchange_sender_id: []const u8, interchange_id_qualifier2: []const u8, interchange_receiver_id: []const u8, interchange_date: []const u8, interchange_time: []const u8, interchange_ctrl_std_id: []const u8, interchange_ctrl_version: []const u8, interchange_ctrl_num: []const u8, ack_reqeusted: bool, usage_indicator: []const u8, ele_separator: []const u8) InterchangeControlHeader {
-        return InterchangeControlTrailer{
+    pub fn init(
+            auth_info_qualifier: []const u8,
+            auth_info: []const u8,
+            sec_info_qualifier: []const u8,
+            sec_info: []const u8,
+            interchange_id_qualifier: []const u8,
+            interchange_sender_id: []const u8,
+            interchange_id_qualifier2: []const u8,
+            interchange_receiver_id: []const u8,
+            interchange_date: []const u8,
+            interchange_time: []const u8,
+            interchange_ctrl_std_id: []const u8,
+            interchange_ctrl_version: []const u8,
+            interchange_ctrl_num: usize,
+            ack_requested: []const u8,
+            usage_indicator: []const u8,
+            ele_separator: []const u8) InterchangeControlHeader {
+        return InterchangeControlHeader{
             .auth_info_qualifier = auth_info_qualifier,
             .auth_info = auth_info,
             .sec_info_qualifier = sec_info_qualifier,
@@ -159,10 +175,9 @@ pub const InterchangeControlHeader = struct {
             .interchange_ctrl_std_id = interchange_ctrl_std_id,
             .interchange_ctrl_version = interchange_ctrl_version,
             .interchange_ctrl_num = interchange_ctrl_num,
-            .ack_reqeusted = ack_reqeusted,
+            .ack_requested = ack_requested,
             .usage_indicator = usage_indicator,
-            .ele_separator = ele_separator,
-        };
+            .ele_separator = ele_separator };
     }
 
     pub fn print(self: InterchangeControlHeader) void {
@@ -175,13 +190,13 @@ pub const InterchangeControlTrailer = struct {
     ty: SegmentType = SegmentType.IEA,
 
     // IEA-01
-    num_of_functional_grps: usize,
+    num_of_functional_grps: usize = 0,
 
     // IEA-02
-    interchange_ctrl_num: []const u8,
+    interchange_ctrl_num: usize = 0,
 
-    pub fn init(num_of_functional_grps: usize, interchange_ctrl_num: []const u8) InterchangeControlTrailer {
-        return InterchangeControlTrailer{ .num_of_functional_grps = num_of_functional_grps, .interchange_ctlr_num = interchange_ctrl_num };
+    pub fn init(num_of_functional_grps: usize, interchange_ctrl_num: usize) InterchangeControlTrailer {
+        return InterchangeControlTrailer{ .num_of_functional_grps = num_of_functional_grps, .interchange_ctrl_num = interchange_ctrl_num };
     }
 
     pub fn print(self: InterchangeControlTrailer) void {

@@ -34,7 +34,7 @@ pub const Parser = struct {
         return Parser{ .s = s, .ele_separator = ele_separator, .seg_separator = seg_separator };
     }
 
-    pub fn parse(self: Parser) X12Document {
+    pub fn parse(self: Parser) void {
         var options = LexerOptions.init(self.seg_separator, self.ele_separator);
         var lexer = Lexer.init(self.s, options);
         lexer.tokens();
@@ -59,36 +59,24 @@ pub const Parser = struct {
             }
         }
 
-        var ts = TransactionSet.init();
-        var isabuf = std.ArrayList(InterchangeControlHeader).init(std.heap.page_allocator);
-        defer isabuf.deinit();
-
-        var isebuf = std.ArrayList(InterchangeControlTrailer).init(std.heap.page_allocator);
-        defer isebuf.deinit();
-
+        const ts = TransactionSet.init();
+        var interchange_ctrl_header = undefined;
+        var interchange_ctrl_trailer = undefined;
         for (segbuf.items) |s| {
             ts.addSegment(s);
 
-            if (s.ty == SegmentType.ISA) {
-                const cn = std.fmt.parseInt(usize, s.getElement(2).val, 10) catch @panic("parsing error");
-                const interchange_ctrl_header = InterchangeControlHeader.init(s.getElement(1).val, s.getElement(2).val, s.getElement(3).val, s.getElement(4).val, s.getElement(5).val, s.getElement(6).val, s.getElement(7).val, s.getElement(8).val, s.getElement(9).val, s.getElement(10).val, s.getElement(11).val, s.getElement(12).val, cn, s.getElement(14).val, s.getElement(16).val, s.getElement(15).val);
-                isabuf.append(interchange_ctrl_header) catch @panic("out of memory");
-            } else if (s.ty == SegmentType.IEA) {
-                const n = std.fmt.parseInt(usize, s.getElement(1).val, 10) catch @panic("parsing error");
-                const cn = std.fmt.parseInt(usize, s.getElement(2).val, 10) catch @panic("parsing error");
+            if (s == SegmentType.ISA) {
+                interchange_ctrl_header = InterchangeControlHeader.init(s.getElement(1), );        
+            } else if (s == SegmentType.IEA) {
 
-                const interchange_ctrl_trailer = InterchangeControlTrailer.init(n, cn);
-                isebuf.append(interchange_ctrl_trailer) catch @panic("out of memory");
             }
         }
 
-        var fg = FunctionalGroup.init();
-        fg.addTransactionSet(&ts);
+        const fg = FunctionalGroup.init();
+        fg.addTransactionSet(ts);
 
-        var doc = X12Document.init(isabuf.pop(), isebuf.pop());
-        doc.addFunctionalGroup(&fg);
-
-        return doc;
+        const doc = X12Document.init();
+        doc.addFunctionalGroup(fg);
     }
 };
 
@@ -114,4 +102,8 @@ test "parser.string" {
     //const tests = [_]tst {
     //
     //};
+}
+
+test "parser.file" {
+    _ = "../assets/x12.base.loop.txt";
 }

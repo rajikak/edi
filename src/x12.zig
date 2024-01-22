@@ -19,11 +19,16 @@ pub const TransactionSet = struct {
     trail: TransactionSetTrailer,
 
     pub fn init() TransactionSet {
+        var buf = std.ArrayList(Segment).init(std.heap.page_allocator);
         return TransactionSet{
-            .buffer = std.ArrayList(TransactionSet).init(std.heap.page_allocator),
+            .buffer = buf,
             .head = TransactionSetHeader.init(),
             .trail = TransactionSetTrailer.init(),
         };
+    }
+
+    pub fn addSegment(self: *TransactionSet, s: Segment) void {
+        self.buffer.append(s) catch @panic("out of memeory");
     }
 };
 
@@ -33,11 +38,16 @@ pub const FunctionalGroup = struct {
     trail: FunctionalGroupTrailer,
 
     pub fn init() FunctionalGroup {
+        var buf = std.ArrayList(TransactionSet).init(std.heap.page_allocator);
         return FunctionalGroup{
-            .buffer = std.ArrayList(TransactionSet).init(std.heap.page_allocator),
+            .buffer = buf,
             .head = FunctionalGroupHeader.init(),
             .trail = FunctionalGroupTrailer.init(),
         };
+    }
+
+    pub fn addTransactionSet(self: FunctionalGroup, ts: *TransactionSet) void {
+        self.buffer.append(ts) catch @panic("out of memory");
     }
 };
 
@@ -48,7 +58,8 @@ pub const X12Document = struct {
     trail: InterchangeControlTrailer,
 
     pub fn init(head: InterchangeControlHeader, trail: InterchangeControlTrailer) X12Document {
-        return X12Document{ .head = head, .trail = trail };
+        var buf = std.ArrayList(FunctionalGroup).init(std.heap.page_allocator);
+        return X12Document{ .head = head, .trail = trail, .buffer = buf };
     }
 
     pub fn header(self: X12Document) InterchangeControlHeader {
@@ -57,5 +68,9 @@ pub const X12Document = struct {
 
     pub fn trailer(self: X12Document) InterchangeControlTrailer {
         return self.trail;
+    }
+
+    pub fn addFunctionalGroup(self: X12Document, fg: *FunctionalGroup) void {
+        self.buffer.append(fg) catch @panic("out of memory");
     }
 };
