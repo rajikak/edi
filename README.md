@@ -3,12 +3,12 @@ EDI parser and library using Zig lang.
 ## Usage
 ### Lexer 
 ```
-test "lexer.segments" {
+test "lexer.segment" {
     const s = "DXS*9251230013*DX*004010UCS*1*9254850000";
-    var options = LexerOptions.init('~', '*');
+    const options = LexerOptions.init('*', '~');
     var lexer = Lexer.init(s, options);
     lexer.tokens();
-    
+
     try expect(11 == lexer.size() - 1);
     try expect(std.mem.eql(u8, s, lexer.value()) == true);
 }

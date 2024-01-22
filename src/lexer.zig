@@ -68,10 +68,10 @@ pub const Token = struct {
 
 // configuration for the lexer
 pub const LexerOptions = struct {
-    seg_separator: u8,
     ele_separator: u8,
+    seg_separator: u8,
 
-    pub fn init(seg_separator: u8, ele_separator: u8) LexerOptions {
+    pub fn init(ele_separator: u8, seg_separator: u8) LexerOptions {
         return LexerOptions{ .seg_separator = seg_separator, .ele_separator = ele_separator };
     }
 };
@@ -198,6 +198,16 @@ pub const Lexer = struct {
         }
     }
 };
+
+test "lexer.segment" {
+    const s = "DXS*9251230013*DX*004010UCS*1*9254850000";
+    const options = LexerOptions.init('*', '~');
+    var lexer = Lexer.init(s, options);
+    lexer.tokens();
+
+    try expect(11 == lexer.size() - 1);
+    try expect(std.mem.eql(u8, s, lexer.value()) == true);
+}
 
 test "lexer.segments" {
     const result = struct {

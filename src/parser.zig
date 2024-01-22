@@ -35,7 +35,7 @@ pub const Parser = struct {
     }
 
     pub fn parse(self: Parser) X12Document {
-        var options = LexerOptions.init(self.seg_separator, self.ele_separator);
+        var options = LexerOptions.init(self.ele_separator, self.seg_separator);
         var lexer = Lexer.init(self.s, options);
         lexer.tokens();
 
@@ -93,6 +93,13 @@ pub const Parser = struct {
 };
 
 test "parser.string" {
+    const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO~ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>~IEA*2*000000049";
+    const p = Parser.init(s, '*', '~');
+    const r = p.parse();
+    _ = r;
+}
+
+test "parser.strings" {
     const s = "ISA*01*0000000000*01*0000000000*ZZ*ABCDEFGHIJKLMNO~ZZ*123456789012345*101127*1719*U*00400*000000049*0*P*>~IEA*2*000000049";
     const p = Parser.init(s, '*', '~');
     const r = p.parse();
